@@ -11,7 +11,7 @@
 :root {
   --ink: #10100f;
   --paper: #f2efe7;
-  --red: #ff4b3e;
+  --red: #f40009;
   --acid: #d9ff43;
   --line: rgba(16, 16, 15, 0.2);
   --font-display: "Meow Script", cursive;
@@ -72,10 +72,10 @@ a { color: inherit; }
   position: relative;
 }
 .hero-photo {
-  background-image: linear-gradient(90deg, rgba(0,0,0,.24), rgba(0,0,0,.1)), url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90");
-  background-position: center 42%;
+  background-image: linear-gradient(90deg, rgba(0,0,0,.34), rgba(0,0,0,.08)), url("/banner1_v01.webp");
+  background-position: center center;
   background-size: cover;
-  filter: grayscale(1) contrast(1.12) brightness(.68);
+  filter: contrast(1.04) brightness(.78);
   inset: 0;
   position: absolute;
   transform: scale(1.01);
