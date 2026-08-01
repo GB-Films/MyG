@@ -144,7 +144,20 @@ a { color: inherit; }
 .facts p { color: #5e5b55; grid-column: 2; line-height: 1.6; margin: 0; max-width: 460px; }
 .facts a { font-size: 11px; font-weight: 800; grid-column: 2; letter-spacing: .1em; text-transform: uppercase; }
 
-.timeline { background: var(--ink); color: white; display: grid; grid-template-columns: .9fr 1.1fr; min-height: 700px; padding: 110px 6vw; }
+.timeline {
+  background-color: var(--ink);
+  background-image:
+    linear-gradient(90deg, rgba(16,16,15,.9), rgba(16,16,15,.72)),
+    url("/banner2_v02.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: white;
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  min-height: 700px;
+  padding: 110px 6vw;
+}
 .timeline-heading { align-self: start; position: static; }
 .timeline h2 { color: white; font-size: clamp(72px, 8vw, 126px); }
 .timeline ol { list-style: none; margin: 0; padding: 0; }
