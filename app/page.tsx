@@ -2,73 +2,62 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+type GiftCategory = "Luna de miel" | "Nuestro hogar" | "Experiencias";
+
 type Gift = {
   id: string;
   name: string;
   amount: number;
-  category: "Luna de miel" | "Nuestro hogar" | "Experiencias";
+  category: GiftCategory;
   image: string;
   note: string;
 };
 
+const categoryNotes: Record<GiftCategory, string> = {
+  "Luna de miel": "Un recuerdo más para nuestra primera gran aventura de casados.",
+  "Nuestro hogar": "Un regalo para estrenar y disfrutar nuestra vida juntos.",
+  Experiencias: "Una experiencia que vamos a disfrutar pensando en ustedes.",
+};
+
+function gift(id: string, name: string, amount: number, category: GiftCategory, image: string): Gift {
+  return { id, name, amount, category, image, note: categoryNotes[category] };
+}
+
 const gifts: Gift[] = [
-  {
-    id: "prosecco-capri",
-    name: "Un brindis en Capri",
-    amount: 65000,
-    category: "Luna de miel",
-    image:
-      "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1200&q=86",
-    note: "Dos copas, el mar y ese atardecer que vamos a recordar siempre.",
-  },
-  {
-    id: "cena-paris",
-    name: "Cena romántica en París",
-    amount: 180000,
-    category: "Experiencias",
-    image:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=86",
-    note: "Una mesa para dos y una noche para brindar por todos ustedes.",
-  },
-  {
-    id: "hotel-amalfi",
-    name: "Una noche en la Costa Amalfitana",
-    amount: 260000,
-    category: "Luna de miel",
-    image:
-      "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1200&q=86",
-    note: "Una ventana al Mediterráneo en nuestra primera aventura de casados.",
-  },
-  {
-    id: "cafetera",
-    name: "Cafetera para domingos lentos",
-    amount: 125000,
-    category: "Nuestro hogar",
-    image:
-      "https://images.unsplash.com/photo-1445116572773-5d785ae4b668?auto=format&fit=crop&w=1200&q=86",
-    note: "Café recién hecho para estrenar todas nuestras mañanas juntos.",
-  },
-  {
-    id: "barco",
-    name: "Paseo en barco al atardecer",
-    amount: 220000,
-    category: "Experiencias",
-    image:
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=86",
-    note: "Mar, música y una tarde sin mirar el reloj.",
-  },
-  {
-    id: "mesa-amigos",
-    name: "Nuestra primera mesa para amigos",
-    amount: 300000,
-    category: "Nuestro hogar",
-    image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=86",
-    note: "Para recibirlos, cocinar algo rico y seguir celebrando muchos años más.",
-  },
+  gift("regalo-001", "Buceo en Tailandia", 130000, "Luna de miel", "/gifts/buceo_v01.png"),
+  gift("regalo-002", "Cargar la SUBE", 100000, "Experiencias", "/gifts/100k para la sube.jpg"),
+  gift("regalo-003", "Cámara profesional", 2500000, "Nuestro hogar", "/gifts/Camara_v01.png"),
+  gift("regalo-004", "Camión de Coca-Cola", 350000, "Nuestro hogar", "/gifts/CamionCoca_v01.png"),
+  gift("regalo-005", "Cena en la Torre Eiffel", 450000, "Luna de miel", "/gifts/TorreEiffel_v01.png"),
+  gift("regalo-006", "Combo Doble Cuarto de Libra", 46000, "Nuestro hogar", "/gifts/dobleCuarto.png"),
+  gift("regalo-007", "Clase de doble de riesgo", 180000, "Experiencias", "/gifts/ClaseDoble_v01.png"),
+  gift("regalo-008", "Entradas para la F1", 450000, "Experiencias", "/gifts/Entradas F1.jpg"),
+  gift("regalo-009", "Máquina de arcade", 3000000, "Nuestro hogar", "/gifts/Flipper.jpg"),
+  gift("regalo-010", "Fotolibro de la luna de miel", 120000, "Nuestro hogar", "/gifts/FotoLibro.webp"),
+  gift("regalo-011", "Noche de glamping en Bali", 275000, "Luna de miel", "/gifts/glamping.jpg"),
+  gift("regalo-012", "Excursión con gorilas", 1200000, "Experiencias", "/gifts/gorilas_v01.png"),
+  gift("regalo-013", "Latas de atún La Campagnola x3", 30000, "Nuestro hogar", "/gifts/latas de atun.webp"),
+  gift("regalo-014", "Llenar el tanque", 100000, "Nuestro hogar", "/gifts/Llenar el tanqu.jpg"),
+  gift("regalo-015", "Llenar la heladera", 250000, "Nuestro hogar", "/gifts/Llenar la heladera.webp"),
+  gift("regalo-016", "Masajes de 60 minutos", 140000, "Experiencias", "/gifts/masajes_v01.png"),
+  gift("regalo-017", "Dos noches all inclusive", 850000, "Luna de miel", "/gifts/Noche All inclusive.jpg"),
+  gift("regalo-018", "Noche de cine premium", 80000, "Experiencias", "/gifts/cinePremium.png"),
+  gift("regalo-019", "Paquete de Lays", 4000, "Nuestro hogar", "/gifts/Paquete de lays.webp"),
+  gift("regalo-020", "Paseo en barco por Capri", 275000, "Luna de miel", "/gifts/barcoCapri_v01.png"),
+  gift("regalo-021", "Picnic en la plaza", 25000, "Experiencias", "/gifts/Picnic_v01.png"),
+  gift("regalo-022", "Safari por África", 750000, "Experiencias", "/gifts/safari_v01.png"),
+  gift("regalo-023", "Vuelo en globo aerostático por Turquía", 600000, "Experiencias", "/gifts/globo_v01.png"),
+  gift("regalo-024", "Noche de truco con Messi y De Paul", 300000, "Nuestro hogar", "/gifts/truco con messi.jpg"),
+  gift("regalo-025", "Visitar el Titanic", 250000, "Experiencias", "/gifts/titanic_v01.png"),
+  gift("regalo-026", "Pisar la Luna", 93000, "Luna de miel", "/gifts/luna_v01.png"),
+  gift("regalo-027", "Tour de vinos en Mendoza", 550000, "Luna de miel", "/gifts/TourVinos Mendoza.jpg"),
+  gift("regalo-028", "Un asado de domingo", 150000, "Nuestro hogar", "/gifts/asado_v01.jpg"),
+  gift("regalo-029", "Van para recorrer el país", 3500000, "Luna de miel", "/gifts/Van para recorrer el mundo.jpg"),
+  gift("regalo-030", "Viaje en primera clase", 1800000, "Luna de miel", "/gifts/primeraClase.webp"),
 ];
 
 const categories = ["Todos", "Luna de miel", "Nuestro hogar", "Experiencias"];
+const GIFTS_PER_PAGE = 10;
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -80,6 +69,7 @@ const WEDDING_ALIAS = "ALIAS.A.CONFIRMAR";
 
 export default function Home() {
   const [category, setCategory] = useState("Todos");
+  const [giftPage, setGiftPage] = useState(1);
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [giftStatus, setGiftStatus] = useState<"idle" | "sending" | "done">("idle");
   const [rsvpStatus, setRsvpStatus] = useState<"idle" | "sending" | "done">("idle");
@@ -92,6 +82,12 @@ export default function Home() {
         : gifts.filter((gift) => gift.category === category),
     [category],
   );
+  const giftPageCount = Math.max(1, Math.ceil(filteredGifts.length / GIFTS_PER_PAGE));
+  const visibleGifts = filteredGifts.slice((giftPage - 1) * GIFTS_PER_PAGE, giftPage * GIFTS_PER_PAGE);
+
+  useEffect(() => {
+    setGiftPage(1);
+  }, [category]);
 
   useEffect(() => {
     if (!selectedGift) return;
@@ -110,6 +106,13 @@ export default function Home() {
     await navigator.clipboard.writeText(WEDDING_ALIAS);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function goToGiftPage(page: number) {
+    setGiftPage(page);
+    window.setTimeout(() => {
+      document.querySelector(".gift-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
   async function submitGift(event: FormEvent<HTMLFormElement>) {
@@ -342,22 +345,43 @@ export default function Home() {
         </div>
 
         <div className="gift-grid">
-          {filteredGifts.map((gift, index) => (
-            <article className="gift-card" key={gift.id}>
-              <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); }}>
-                <span className="gift-image-wrap">
-                  <img src={gift.image} alt="" />
-                  <span className="gift-number">0{index + 1}</span>
-                </span>
-                <span className="gift-meta">
-                  <small>{gift.category}</small>
-                  <strong>{gift.name}</strong>
-                  <span>{money.format(gift.amount)} <i>Elegir regalo →</i></span>
-                </span>
-              </button>
-            </article>
-          ))}
+          {visibleGifts.map((gift, index) => {
+            const giftNumber = String((giftPage - 1) * GIFTS_PER_PAGE + index + 1).padStart(2, "0");
+            return (
+              <article className="gift-card" key={gift.id}>
+                <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); }}>
+                  <span className="gift-image-wrap">
+                    <img src={gift.image} alt="" />
+                    <span className="gift-number">{giftNumber}</span>
+                  </span>
+                  <span className="gift-meta">
+                    <small>{gift.category}</small>
+                    <strong>{gift.name}</strong>
+                    <span>{money.format(gift.amount)} <i>Elegir regalo →</i></span>
+                  </span>
+                </button>
+              </article>
+            );
+          })}
         </div>
+
+        {giftPageCount > 1 && (
+          <nav className="gift-pagination" aria-label="Páginas del catálogo">
+            <button type="button" onClick={() => goToGiftPage(giftPage - 1)} disabled={giftPage === 1} aria-label="Página anterior">←</button>
+            {Array.from({ length: giftPageCount }, (_, index) => index + 1).map((page) => (
+              <button
+                type="button"
+                className={giftPage === page ? "active" : ""}
+                aria-current={giftPage === page ? "page" : undefined}
+                onClick={() => goToGiftPage(page)}
+                key={page}
+              >
+                {page}
+              </button>
+            ))}
+            <button type="button" onClick={() => goToGiftPage(giftPage + 1)} disabled={giftPage === giftPageCount} aria-label="Página siguiente">→</button>
+          </nav>
+        )}
       </section>
 
       <footer>

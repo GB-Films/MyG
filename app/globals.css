@@ -173,9 +173,9 @@ a { color: inherit; }
 .gift-filters { border-bottom: 1px solid rgba(255,255,255,.22); display: flex; gap: 28px; margin: 70px 0 38px; overflow-x: auto; }
 .gift-filters button { background: none; border: 0; color: #94918b; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: .13em; padding: 0 0 14px; text-transform: uppercase; white-space: nowrap; }
 .gift-filters button.active { border-bottom: 3px solid white; color: white; }
-.gift-grid { display: grid; gap: 18px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gift-grid { display: grid; gap: 18px; grid-template-columns: repeat(5, minmax(0, 1fr)); scroll-margin-top: 90px; }
 .gift-card button { background: none; border: 0; color: inherit; cursor: pointer; display: block; padding: 0; text-align: left; width: 100%; }
-.gift-image-wrap { display: block; height: clamp(210px, 23vw, 340px); overflow: hidden; position: relative; }
+.gift-image-wrap { aspect-ratio: 4 / 3; display: block; overflow: hidden; position: relative; }
 .gift-card img { filter: grayscale(.25); height: 100%; object-fit: cover; transition: transform .5s ease, filter .5s ease; width: 100%; }
 .gift-card button:hover img { filter: grayscale(0); transform: scale(1.035); }
 .gift-number { background: var(--acid); color: var(--ink); font-size: 11px; font-weight: 900; left: 12px; padding: 8px; position: absolute; top: 12px; }
@@ -184,6 +184,10 @@ a { color: inherit; }
 .gift-meta strong { display: block; font-family: Georgia, serif; font-size: clamp(20px, 2vw, 30px); font-weight: 400; letter-spacing: -.04em; line-height: 1.05; min-height: 66px; }
 .gift-meta > span { display: flex; font-size: 12px; font-weight: 800; gap: 12px; justify-content: space-between; margin-top: 15px; }
 .gift-meta i { color: white; font-style: normal; text-decoration: underline; }
+.gift-pagination { align-items: center; display: flex; gap: 10px; justify-content: center; margin-top: 64px; }
+.gift-pagination button { align-items: center; background: transparent; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; color: white; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 800; height: 44px; justify-content: center; width: 44px; }
+.gift-pagination button:hover, .gift-pagination button.active { background: white; border-color: white; color: var(--ink); }
+.gift-pagination button:disabled { cursor: default; opacity: .28; }
 
 .rsvp { background: var(--paper); color: var(--ink); display: grid; gap: 8vw; grid-template-columns: .75fr 1.25fr; min-height: 760px; padding: 120px 6vw; }
 .rsvp-intro { position: relative; }
@@ -273,7 +277,6 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gifts { padding: 90px 22px; }
   .section-head { gap: 30px; grid-template-columns: 1fr; }
   .gift-grid { grid-template-columns: 1fr 1fr; }
-  .gift-image-wrap { height: 48vw; }
   .rsvp { gap: 60px; padding: 90px 22px; }
   .rsvp-stamp { bottom: -30px; }
   .gift-modal { grid-template-columns: 1fr; }
@@ -288,7 +291,6 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 @media (max-width: 580px) {
   .hero-photo { background-position: 58% center; }
   .gift-grid { grid-template-columns: 1fr; }
-  .gift-image-wrap { height: 105vw; max-height: 480px; }
   .gift-meta strong { min-height: auto; }
   .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
   .timeline h2 { font-size: clamp(68px, 22vw, 96px); }
