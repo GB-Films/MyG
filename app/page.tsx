@@ -172,10 +172,10 @@ export default function Home() {
         </a>
         <nav aria-label="Navegación principal">
           <a href="#info">El día</a>
-          <a href="#regalos">Regalos</a>
           <a className="nav-rsvp" href="#confirmar">
             Confirmar
           </a>
+          <a href="#regalos">Regalos</a>
         </nav>
       </header>
 
@@ -244,51 +244,6 @@ export default function Home() {
           <li><time>19:00</time><span>Cóctel</span><em>Comida, fotos y abrazos</em></li>
           <li><time>21:00</time><span>Cena + fiesta</span><em>Hasta que salga el sol</em></li>
         </ol>
-      </section>
-
-      <section className="gifts" id="regalos">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow light">Nuestra lista</p>
-            <h2>Regalá un<br />recuerdo.</h2>
-          </div>
-          <p>
-            Elegí una experiencia o algo para nuestra casa. Tu transferencia
-            se acredita a nuestro fondo de casamiento y nosotros recibimos tu
-            regalo, tu nombre y tu dedicatoria.
-          </p>
-        </div>
-
-        <div className="gift-filters" role="group" aria-label="Filtrar regalos">
-          {categories.map((item) => (
-            <button
-              key={item}
-              className={category === item ? "active" : ""}
-              onClick={() => setCategory(item)}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        <div className="gift-grid">
-          {filteredGifts.map((gift, index) => (
-            <article className="gift-card" key={gift.id}>
-              <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); }}>
-                <span className="gift-image-wrap">
-                  <img src={gift.image} alt="" />
-                  <span className="gift-number">0{index + 1}</span>
-                </span>
-                <span className="gift-meta">
-                  <small>{gift.category}</small>
-                  <strong>{gift.name}</strong>
-                  <span>{money.format(gift.amount)} <i>Elegir regalo →</i></span>
-                </span>
-              </button>
-            </article>
-          ))}
-        </div>
       </section>
 
       <section className="rsvp" id="confirmar">
@@ -360,6 +315,51 @@ export default function Home() {
         )}
       </section>
 
+      <section className="gifts" id="regalos">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow light">Nuestra lista</p>
+            <h2>Regalá un<br />recuerdo.</h2>
+          </div>
+          <p>
+            Elegí una experiencia o algo para nuestra casa. Tu transferencia
+            se acredita a nuestro fondo de casamiento y nosotros recibimos tu
+            regalo, tu nombre y tu dedicatoria.
+          </p>
+        </div>
+
+        <div className="gift-filters" role="group" aria-label="Filtrar regalos">
+          {categories.map((item) => (
+            <button
+              key={item}
+              className={category === item ? "active" : ""}
+              onClick={() => setCategory(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
+        <div className="gift-grid">
+          {filteredGifts.map((gift, index) => (
+            <article className="gift-card" key={gift.id}>
+              <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); }}>
+                <span className="gift-image-wrap">
+                  <img src={gift.image} alt="" />
+                  <span className="gift-number">0{index + 1}</span>
+                </span>
+                <span className="gift-meta">
+                  <small>{gift.category}</small>
+                  <strong>{gift.name}</strong>
+                  <span>{money.format(gift.amount)} <i>Elegir regalo →</i></span>
+                </span>
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <footer>
         <div className="footer-mark">M<span>+</span>G</div>
         <p>21 · 11 · 2026 — Darwin Tortugas</p>
@@ -368,8 +368,8 @@ export default function Home() {
 
       <div className="mobile-nav" aria-label="Accesos rápidos">
         <a href="#info">El día</a>
-        <a href="#regalos">Regalos</a>
         <a href="#confirmar">Confirmar</a>
+        <a href="#regalos">Regalos</a>
       </div>
 
       {selectedGift && (
