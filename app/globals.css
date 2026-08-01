@@ -147,7 +147,7 @@ a { color: inherit; }
 .timeline {
   background-color: var(--ink);
   background-image:
-    linear-gradient(90deg, rgba(16,16,15,.9), rgba(16,16,15,.72)),
+    linear-gradient(90deg, rgba(16,16,15,.32), rgba(16,16,15,.64) 54%, rgba(16,16,15,.92)),
     url("/banner2_v02.webp");
   background-position: center;
   background-repeat: no-repeat;
@@ -160,7 +160,7 @@ a { color: inherit; }
 }
 .timeline-heading { align-self: start; position: static; }
 .timeline h2 { color: white; font-size: clamp(72px, 8vw, 126px); }
-.timeline ol { list-style: none; margin: 0; padding: 0; }
+.timeline ol { justify-self: end; list-style: none; margin: 0; padding: 0; width: 100%; }
 .timeline li { align-items: baseline; border-top: 1px solid rgba(255,255,255,.24); display: grid; gap: 20px; grid-template-columns: 100px 1fr; padding: 26px 0; }
 .timeline li:last-child { border-bottom: 1px solid rgba(255,255,255,.24); }
 .timeline time { font-family: Georgia, serif; font-size: 28px; }
@@ -267,7 +267,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .facts article { grid-template-columns: 84px 1fr; }
   .timeline { padding: 85px 22px; }
   .timeline-heading { position: static; }
-  .timeline ol { margin-top: 60px; }
+  .timeline-heading { max-width: 62%; }
+  .timeline ol { margin: 60px 0 0 auto; width: min(68%, 700px); }
   .timeline li { grid-template-columns: 78px 1fr; }
   .gifts { padding: 90px 22px; }
   .section-head { gap: 30px; grid-template-columns: 1fr; }
@@ -291,6 +292,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gift-meta strong { min-height: auto; }
   .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
   .timeline h2 { font-size: clamp(68px, 22vw, 96px); }
+  .timeline-heading { max-width: none; }
+  .timeline ol { width: 100%; }
   .rsvp h2 { font-size: clamp(94px, 30vw, 124px); }
   .rsvp-form, .gift-fields { grid-template-columns: 1fr; }
   .rsvp-form > *, .gift-fields > * { grid-column: 1; }
