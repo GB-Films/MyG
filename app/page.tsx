@@ -416,7 +416,7 @@ export default function Home() {
                   <span className="gift-meta">
                     <small>{gift.category}</small>
                     <strong>{gift.name}</strong>
-                    <span>{money.format(gift.amount)} <i>Elegir regalo →</i></span>
+                    <span>{money.format(gift.amount)}</span>
                   </span>
                 </button>
               </article>

@@ -198,9 +198,8 @@ a { color: inherit; }
 .gift-number { background: var(--red); color: white; font-size: 11px; font-weight: 900; left: 12px; padding: 8px; position: absolute; top: 12px; }
 .gift-meta { border-top: 1px solid rgba(255,255,255,.22); display: block; margin-top: 14px; padding-top: 12px; }
 .gift-meta small { color: #aaa7a1; display: block; font-size: 9px; font-weight: 800; letter-spacing: .13em; margin-bottom: 8px; text-transform: uppercase; }
-.gift-meta strong { display: block; font-family: Georgia, serif; font-size: clamp(20px, 2vw, 30px); font-weight: 400; letter-spacing: -.04em; line-height: 1.05; min-height: 66px; }
-.gift-meta > span { display: flex; font-size: 12px; font-weight: 800; gap: 12px; justify-content: space-between; margin-top: 15px; }
-.gift-meta i { color: white; font-style: normal; text-decoration: underline; }
+.gift-meta strong { display: block; font-family: Georgia, serif; font-size: clamp(20px, 2vw, 30px); font-weight: 400; letter-spacing: -.04em; line-height: 1.05; }
+.gift-meta > span { display: block; font-size: 16px; font-weight: 800; margin-top: 8px; }
 .gift-pagination { align-items: center; display: flex; gap: 10px; justify-content: center; margin-top: 64px; }
 .gift-pagination button { align-items: center; background: transparent; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; color: white; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 800; height: 44px; justify-content: center; width: 44px; }
 .gift-pagination button:hover, .gift-pagination button.active { background: white; border-color: white; color: var(--ink); }
