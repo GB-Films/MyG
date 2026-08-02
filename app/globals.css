@@ -202,9 +202,9 @@ a { color: inherit; }
 
 .rsvp { background: var(--paper); color: var(--ink); display: grid; gap: 8vw; grid-template-columns: .75fr 1.25fr; min-height: 760px; padding: 120px 6vw; }
 .rsvp-intro { position: relative; }
-.rsvp h2 { font-size: clamp(108px, 12vw, 180px); }
-.rsvp-car-image { display: block; height: auto; margin: 24px 0 0 18px; width: min(220px, 78%); }
-.rsvp-form { align-content: start; display: grid; gap: 28px 22px; grid-template-columns: 1fr 1fr; }
+.rsvp h2 { font-size: clamp(108px, 12vw, 180px); margin-top: 18px; }
+.rsvp-car-image { display: block; height: auto; margin: 42px auto 0; width: min(340px, 92%); }
+.rsvp-form { align-content: start; display: grid; gap: 38px 32px; grid-template-columns: 1fr 1fr; }
 .rsvp-form label, .gift-fields label { color: #4f4d49; display: flex; font-size: 10px; font-weight: 800; gap: 9px; letter-spacing: .12em; flex-direction: column; text-transform: uppercase; }
 .rsvp-form input, .rsvp-form select, .gift-fields input, .gift-fields textarea {
   background: transparent;
@@ -220,15 +220,19 @@ a { color: inherit; }
 .rsvp-form input::placeholder { color: #78756f; }
 .rsvp-form select { color-scheme: light; }
 .rsvp-form input:focus, .rsvp-form select:focus, .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }
+.rsvp-form > label { color: var(--ink); font-size: 12px; letter-spacing: .14em; }
+.rsvp-form input, .rsvp-form select { font-family: Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -.01em; min-height: 58px; }
+.rsvp-form input::placeholder { color: #5e5b55; opacity: 1; }
 .gift-fields label { color: #4f4d49; }
 .gift-fields input, .gift-fields textarea { border-bottom-color: #8f8c85; color: var(--ink); }
 .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }
 .full { grid-column: 1 / -1; }
 .attendance { border: 0; display: flex; gap: 12px; margin: 0; padding: 0; }
-.attendance legend { color: #4f4d49; font-size: 10px; font-weight: 800; letter-spacing: .12em; margin-bottom: 10px; text-transform: uppercase; }
-.attendance label { align-items: center; background: #dedbd4; color: var(--ink); border-radius: 999px; cursor: pointer; flex-direction: row; font-size: 11px; padding: 10px 15px; text-transform: none; }
+.attendance legend { color: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: .14em; margin-bottom: 14px; text-transform: uppercase; }
+.attendance label { align-items: center; background: #dedbd4; color: var(--ink); border-radius: 999px; cursor: pointer; flex-direction: row; font-family: Georgia, serif; font-size: 17px; font-weight: 400; letter-spacing: 0; padding: 12px 18px; text-transform: none; }
 .attendance input { accent-color: var(--red); min-height: auto; }
 .submit-button { background: var(--ink); border: 0; color: white; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .12em; min-height: 58px; padding: 18px 24px; text-transform: uppercase; }
+.rsvp-form .submit-button { font-size: 13px; min-height: 64px; padding: 20px 24px; }
 .submit-button:hover { background: #30302e; }
 .submit-button:disabled { cursor: wait; opacity: .6; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
