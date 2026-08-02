@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin, Music2, UsersRound } from "lucide-react";
 
 type GiftCategory = "Luna de miel" | "Nuestro hogar" | "Experiencias";
 
@@ -218,6 +218,16 @@ export default function Home() {
       </section>
 
       <section className="intro" id="info">
+        <div className="intro-hearts" aria-hidden="true">
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+        </div>
         <div className="intro-title">
           <p className="eyebrow">Información importante</p>
           <h2>Nos vemos<br />acá.</h2>
@@ -246,7 +256,10 @@ export default function Home() {
           <article>
             <span>03 / Código</span>
             <div className="fact-heading">
-              <img className="fact-illustration" src="/dress-code-dance.png" alt="" aria-hidden="true" />
+              <span className="dance-icon" aria-hidden="true">
+                <UsersRound className="dance-icon-people" strokeWidth={1.55} />
+                <Music2 className="dance-icon-note" strokeWidth={1.55} />
+              </span>
               <h3>Elegantes, pero ustedes</h3>
             </div>
             <p>Traigan ganas de bailar. El resto lo ponemos nosotros.</p>

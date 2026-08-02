@@ -127,7 +127,18 @@ a { color: inherit; }
 .scroll-cue { bottom: 36px; font-size: 10px; font-weight: 800; left: 6vw; letter-spacing: .18em; position: absolute; text-decoration: none; text-transform: uppercase; z-index: 4; }
 .scroll-cue span { color: var(--red); font-size: 18px; margin-left: 8px; }
 
-.intro { background-color: white; background-image: url("/hearts-day-background.png"); background-position: center; background-repeat: no-repeat; background-size: cover; display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; padding: 120px 6vw; }
+.intro { background-color: white; display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; overflow: hidden; padding: 120px 6vw; position: relative; }
+.intro-hearts { inset: 0; pointer-events: none; position: absolute; z-index: 0; }
+.intro-hearts span { color: var(--ink); font-family: Arial, Helvetica, sans-serif; line-height: 1; position: absolute; }
+.intro-hearts span:nth-child(1) { font-size: 17px; left: 3%; top: 5%; transform: rotate(-13deg); }
+.intro-hearts span:nth-child(2) { font-size: 12px; left: 44%; top: 9%; transform: rotate(17deg); }
+.intro-hearts span:nth-child(3) { font-size: 15px; right: 3%; top: 7%; transform: rotate(9deg); }
+.intro-hearts span:nth-child(4) { font-size: 11px; left: 43%; top: 48%; transform: rotate(-21deg); }
+.intro-hearts span:nth-child(5) { bottom: 8%; font-size: 14px; left: 3%; transform: rotate(14deg); }
+.intro-hearts span:nth-child(6) { bottom: 4%; font-size: 18px; left: 45%; transform: rotate(-8deg); }
+.intro-hearts span:nth-child(7) { bottom: 10%; font-size: 12px; right: 3%; transform: rotate(22deg); }
+.intro-hearts span:nth-child(8) { font-size: 16px; right: 2%; top: 48%; transform: rotate(-15deg); }
+.intro-title, .facts { position: relative; z-index: 1; }
 .intro-title { position: relative; }
 .intro h2, .gifts h2 { font-size: clamp(88px, 10vw, 148px); }
 .wedding-rings-image { display: block; height: auto; margin: 18px auto 0; width: min(340px, 86%); }
@@ -136,9 +147,10 @@ a { color: inherit; }
 .facts article > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .fact-heading { align-items: center; display: flex; gap: 18px; }
 .fact-icon { flex: 0 0 auto; height: 38px; transform: rotate(-3deg); width: 38px; }
-.fact-illustration { flex: 0 0 auto; height: 58px; object-fit: contain; width: 46px; }
+.dance-icon { flex: 0 0 auto; height: 38px; position: relative; transform: rotate(-2deg); width: 38px; }
+.dance-icon-people { height: 34px; left: 0; position: absolute; top: 4px; width: 34px; }
+.dance-icon-note { background: white; height: 15px; position: absolute; right: -1px; top: -1px; width: 15px; }
 .facts article:nth-child(2) .fact-icon { transform: rotate(4deg); }
-.facts article:nth-child(3) .fact-icon { transform: rotate(-2deg); }
 .facts h3 { font-family: Georgia, serif; font-size: clamp(25px, 3vw, 42px); font-weight: 400; letter-spacing: -.04em; margin: 0; }
 .facts p { color: #5e5b55; grid-column: 2; line-height: 1.6; margin: 0; max-width: 460px; }
 .facts a { font-size: 11px; font-weight: 800; grid-column: 2; letter-spacing: .1em; text-transform: uppercase; }
