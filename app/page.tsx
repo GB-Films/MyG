@@ -387,9 +387,10 @@ export default function Home() {
             <h2>Regalá un<br />recuerdo.</h2>
           </div>
           <p>
-            Elegí una experiencia o algo para nuestra casa. Tu transferencia
-            se acredita a nuestro fondo de casamiento y nosotros recibimos tu
-            regalo, tu nombre y tu dedicatoria.
+            El mejor regalo es compartir este día con ustedes. Si además tienen
+            ganas de hacernos un regalo, pueden elegir algo de esta lista para
+            acompañarnos en esta nueva etapa. Pero, de verdad, lo más importante
+            para nosotros es que estén ahí.
           </p>
         </div>
 
