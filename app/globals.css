@@ -130,18 +130,23 @@ a { color: inherit; }
 .intro { display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; padding: 120px 6vw; }
 .intro-title { position: relative; }
 .intro h2, .gifts h2 { font-size: clamp(88px, 10vw, 148px); }
-.scribble, .rsvp-stamp {
-  color: var(--red);
-  font-family: "Comic Sans MS", "Bradley Hand", cursive;
-  font-size: 22px;
-  line-height: 1.05;
-  position: absolute;
-  transform: rotate(-9deg);
-}
-.scribble { left: 42%; top: 280px; }
+.day-doodles { height: 128px; margin: 28px 0 0 20px; position: relative; width: 220px; }
+.wedding-rings { height: 96px; left: 26px; position: absolute; top: 9px; transform: rotate(-7deg); width: 150px; }
+.wedding-rings i { border: 2px solid var(--ink); border-radius: 50%; height: 54px; position: absolute; width: 88px; }
+.wedding-rings i::after { border: 1px solid var(--ink); border-radius: 50%; content: ""; inset: 7px; position: absolute; }
+.wedding-rings i:first-child { left: 4px; top: 10px; transform: rotate(17deg); }
+.wedding-rings i:last-child { left: 57px; top: 29px; transform: rotate(-18deg); }
+.doodle-heart { color: var(--ink); height: 13px; position: absolute; width: 13px; }
+.doodle-heart-one { left: 177px; top: 4px; transform: rotate(12deg); }
+.doodle-heart-two { color: var(--red); height: 17px; left: 4px; top: 80px; transform: rotate(-18deg); width: 17px; }
+.doodle-heart-three { left: 187px; top: 87px; transform: rotate(17deg); }
 .facts { border-top: 1px solid var(--line); }
-.facts article { border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 120px 1fr; padding: 32px 0; }
+.facts article { border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 120px 1fr; padding: 32px 0; position: relative; }
 .facts article > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.fact-heading { align-items: center; display: flex; gap: 18px; }
+.fact-icon { flex: 0 0 auto; height: 38px; transform: rotate(-3deg); width: 38px; }
+.facts article:nth-child(2) .fact-icon { transform: rotate(4deg); }
+.facts article:nth-child(3) .fact-icon { transform: rotate(-2deg); }
 .facts h3 { font-family: Georgia, serif; font-size: clamp(25px, 3vw, 42px); font-weight: 400; letter-spacing: -.04em; margin: 0; }
 .facts p { color: #5e5b55; grid-column: 2; line-height: 1.6; margin: 0; max-width: 460px; }
 .facts a { font-size: 11px; font-weight: 800; grid-column: 2; letter-spacing: .1em; text-transform: uppercase; }
@@ -195,7 +200,6 @@ a { color: inherit; }
 .rsvp-intro { position: relative; }
 .rsvp h2 { font-size: clamp(108px, 12vw, 180px); }
 .rsvp-intro > p:not(.eyebrow) { line-height: 1.7; max-width: 400px; }
-.rsvp-stamp { bottom: 120px; right: 10%; }
 .rsvp-form { align-content: start; display: grid; gap: 28px 22px; grid-template-columns: 1fr 1fr; }
 .rsvp-form label, .gift-fields label { color: #4f4d49; display: flex; font-size: 10px; font-weight: 800; gap: 9px; letter-spacing: .12em; flex-direction: column; text-transform: uppercase; }
 .rsvp-form input, .rsvp-form select, .gift-fields input, .gift-fields textarea {
@@ -282,7 +286,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .scroll-cue { bottom: 24px; left: 22px; }
   .intro, .timeline, .rsvp { grid-template-columns: 1fr; }
   .intro { gap: 70px; min-height: auto; padding: 90px 22px; }
-  .scribble { left: auto; right: 8%; top: 150px; }
+  .day-doodles { margin-left: 10px; }
   .facts article { grid-template-columns: 84px 1fr; }
   .timeline { padding: 85px 22px; }
   .timeline-heading { position: static; }
@@ -293,7 +297,6 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .section-head { gap: 30px; grid-template-columns: 1fr; }
   .gift-grid { grid-template-columns: 1fr 1fr; }
   .rsvp { gap: 60px; padding: 90px 22px; }
-  .rsvp-stamp { bottom: -30px; }
   .gift-modal { grid-template-columns: 1fr; }
   .modal-image { min-height: 260px; }
   .gift-form, .modal-success { padding: 44px 24px; }

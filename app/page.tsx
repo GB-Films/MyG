@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { CalendarDays, Heart, MapPin, Shirt } from "lucide-react";
 
 type GiftCategory = "Luna de miel" | "Nuestro hogar" | "Experiencias";
 
@@ -220,17 +221,28 @@ export default function Home() {
         <div className="intro-title">
           <p className="eyebrow">Información importante</p>
           <h2>Nos vemos<br />acá.</h2>
-          <div className="scribble" aria-hidden="true">amor, risas<br />y baile ♡</div>
+          <div className="day-doodles" aria-hidden="true">
+            <div className="wedding-rings"><i /><i /></div>
+            <Heart className="doodle-heart doodle-heart-one" fill="currentColor" />
+            <Heart className="doodle-heart doodle-heart-two" fill="currentColor" />
+            <Heart className="doodle-heart doodle-heart-three" fill="currentColor" />
+          </div>
         </div>
         <div className="facts">
           <article>
             <span>01 / Fecha</span>
-            <h3>21 de noviembre</h3>
+            <div className="fact-heading">
+              <CalendarDays className="fact-icon" strokeWidth={1.55} aria-hidden="true" />
+              <h3>21 de noviembre</h3>
+            </div>
             <p>Sábado · Recepción desde las 17:30</p>
           </article>
           <article>
             <span>02 / Lugar</span>
-            <h3>Darwin Tortugas</h3>
+            <div className="fact-heading">
+              <MapPin className="fact-icon" strokeWidth={1.55} aria-hidden="true" />
+              <h3>Darwin Tortugas</h3>
+            </div>
             <p>Salón Laguna · Fiesta y ceremonia en el mismo lugar.</p>
             <a href="https://maps.google.com/?q=Darwin+Tortugas" target="_blank" rel="noreferrer">
               Cómo llegar ↗
@@ -238,7 +250,10 @@ export default function Home() {
           </article>
           <article>
             <span>03 / Código</span>
-            <h3>Elegantes, pero ustedes</h3>
+            <div className="fact-heading">
+              <Shirt className="fact-icon" strokeWidth={1.55} aria-hidden="true" />
+              <h3>Elegantes, pero ustedes</h3>
+            </div>
             <p>Traigan ganas de bailar. El resto lo ponemos nosotros.</p>
           </article>
         </div>
@@ -265,7 +280,6 @@ export default function Home() {
             Queremos guardar un lugar para vos. Completá una confirmación por
             grupo o familia.
           </p>
-          <div className="rsvp-stamp" aria-hidden="true">see you<br />there! ♡</div>
         </div>
 
         {rsvpStatus === "done" ? (
