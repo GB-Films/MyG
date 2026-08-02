@@ -222,7 +222,7 @@ a { color: inherit; }
 .submit-button:hover { background: #30302e; }
 .submit-button:disabled { cursor: wait; opacity: .6; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
-.success-card > span, .modal-success > span { align-items: center; background: var(--acid); border-radius: 50%; display: inline-flex; font-size: 30px; height: 64px; justify-content: center; width: 64px; }
+.success-card > span { align-items: center; background: var(--acid); border-radius: 50%; display: inline-flex; font-size: 30px; height: 64px; justify-content: center; width: 64px; }
 .success-card h3 { font-family: Georgia, serif; font-size: 40px; font-weight: 400; margin: 24px 0 12px; }
 .success-card p { color: #66625c; line-height: 1.6; }
 .success-card button, .modal-success button { background: none; border: 0; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .1em; margin-top: 20px; text-decoration: underline; text-transform: uppercase; }
@@ -252,8 +252,21 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .gift-form > .submit-button { background: var(--ink); color: white; width: 100%; }
 .gift-form > .submit-button:hover { background: #30302e; }
 .modal-success { text-align: center; }
-.modal-success h2 { margin-top: 24px; }
-.modal-success p:not(.eyebrow) { color: #66625c; line-height: 1.6; }
+.success-heart { animation: heart-pop .65s cubic-bezier(.2, 1.35, .35, 1), heart-beat 1.8s ease-in-out .75s infinite; color: var(--red); display: inline-block; filter: drop-shadow(0 8px 14px rgba(244, 0, 9, .2)); font-size: 74px; line-height: 1; transform-origin: center; }
+.modal-success h2 { margin-top: 18px; }
+.gift-thanks { color: #66625c; font-family: Georgia, serif; font-size: 17px; font-style: italic; line-height: 1.65; margin: 20px auto 0; max-width: 520px; }
+
+@keyframes heart-pop {
+  0% { opacity: 0; transform: scale(.25) rotate(-14deg); }
+  65% { opacity: 1; transform: scale(1.16) rotate(5deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes heart-beat {
+  0%, 34%, 100% { transform: scale(1); }
+  12% { transform: scale(1.12); }
+  22% { transform: scale(.97); }
+}
 
 @media (max-width: 900px) {
   .topbar { height: 58px; padding: 0 20px; }
@@ -309,4 +322,5 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
+  .success-heart { animation: none; }
 }
