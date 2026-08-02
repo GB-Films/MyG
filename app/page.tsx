@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Heart, MapPin, Shirt } from "lucide-react";
+import { CalendarDays, MapPin, Shirt } from "lucide-react";
 
 type GiftCategory = "Luna de miel" | "Nuestro hogar" | "Experiencias";
 
@@ -221,12 +221,7 @@ export default function Home() {
         <div className="intro-title">
           <p className="eyebrow">Información importante</p>
           <h2>Nos vemos<br />acá.</h2>
-          <div className="day-doodles" aria-hidden="true">
-            <div className="wedding-rings"><i /><i /></div>
-            <Heart className="doodle-heart doodle-heart-one" fill="currentColor" />
-            <Heart className="doodle-heart doodle-heart-two" fill="currentColor" />
-            <Heart className="doodle-heart doodle-heart-three" fill="currentColor" />
-          </div>
+          <img className="wedding-rings-image" src="/wedding-rings-exact.png" alt="Dos alianzas entrelazadas" />
         </div>
         <div className="facts">
           <article>

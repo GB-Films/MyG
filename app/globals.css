@@ -127,19 +127,10 @@ a { color: inherit; }
 .scroll-cue { bottom: 36px; font-size: 10px; font-weight: 800; left: 6vw; letter-spacing: .18em; position: absolute; text-decoration: none; text-transform: uppercase; z-index: 4; }
 .scroll-cue span { color: var(--red); font-size: 18px; margin-left: 8px; }
 
-.intro { display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; padding: 120px 6vw; }
+.intro { background-color: white; background-image: url("/hearts-day-background.png"); background-position: center; background-repeat: no-repeat; background-size: cover; display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; padding: 120px 6vw; }
 .intro-title { position: relative; }
 .intro h2, .gifts h2 { font-size: clamp(88px, 10vw, 148px); }
-.day-doodles { height: 128px; margin: 28px 0 0 20px; position: relative; width: 220px; }
-.wedding-rings { height: 96px; left: 26px; position: absolute; top: 9px; transform: rotate(-7deg); width: 150px; }
-.wedding-rings i { border: 2px solid var(--ink); border-radius: 50%; height: 54px; position: absolute; width: 88px; }
-.wedding-rings i::after { border: 1px solid var(--ink); border-radius: 50%; content: ""; inset: 7px; position: absolute; }
-.wedding-rings i:first-child { left: 4px; top: 10px; transform: rotate(17deg); }
-.wedding-rings i:last-child { left: 57px; top: 29px; transform: rotate(-18deg); }
-.doodle-heart { color: var(--ink); height: 13px; position: absolute; width: 13px; }
-.doodle-heart-one { left: 177px; top: 4px; transform: rotate(12deg); }
-.doodle-heart-two { color: var(--red); height: 17px; left: 4px; top: 80px; transform: rotate(-18deg); width: 17px; }
-.doodle-heart-three { left: 187px; top: 87px; transform: rotate(17deg); }
+.wedding-rings-image { display: block; height: auto; margin: 20px 0 0 8px; width: 168px; }
 .facts { border-top: 1px solid var(--line); }
 .facts article { border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 120px 1fr; padding: 32px 0; position: relative; }
 .facts article > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
@@ -286,7 +277,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .scroll-cue { bottom: 24px; left: 22px; }
   .intro, .timeline, .rsvp { grid-template-columns: 1fr; }
   .intro { gap: 70px; min-height: auto; padding: 90px 22px; }
-  .day-doodles { margin-left: 10px; }
+  .wedding-rings-image { margin-left: 0; width: 150px; }
   .facts article { grid-template-columns: 84px 1fr; }
   .timeline { padding: 85px 22px; }
   .timeline-heading { position: static; }
