@@ -252,7 +252,7 @@ export default function Home() {
               <CalendarDays className="fact-icon" strokeWidth={1.55} aria-hidden="true" />
               <h3>21 de noviembre</h3>
             </div>
-            <p>Sábado · Los esperamos a las 17:30</p>
+            <p>Sábado · Los esperamos a las 17:30.</p>
           </article>
           <article>
             <span>02 / Lugar</span>
@@ -273,7 +273,7 @@ export default function Home() {
               <HangerIcon className="hanger-icon" />
               <h3>Elegantes</h3>
             </div>
-            <p>Blanco reservado para la novia<br />Verde para la familia del novio<br />Azul para las damas de honor.</p>
+            <p>Blanco reservado para la novia.<br />Verde para la familia del novio.<br />Azul para las damas de honor.</p>
           </article>
         </div>
       </section>
