@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, Frown, MapPin, PartyPopper } from "lucide-react";
 
 function DressIcon({ className = "" }: { className?: string }) {
   return (
@@ -291,7 +291,7 @@ export default function Home() {
         <div className="rsvp-intro">
           <p className="eyebrow">RSVP · antes del 20/10</p>
           <h2>¿Venís?</h2>
-          <img className="rsvp-car-image" src="/rsvp-car-exact.png" alt="Pareja recién casada alejándose en auto" />
+          <img className="rsvp-car-image" src="/rsvp-car-hq.png" alt="Pareja recién casada alejándose en auto" />
         </div>
 
         {rsvpStatus === "done" ? (
@@ -303,7 +303,7 @@ export default function Home() {
           </div>
         ) : (
           <form className="rsvp-form" onSubmit={submitRsvp}>
-            <label className="full">
+            <label>
               Nombre y apellido
               <input name="fullName" autoComplete="name" required placeholder="Escribí tu nombre" />
             </label>
@@ -311,24 +311,28 @@ export default function Home() {
               Email
               <input name="rsvpEmail" type="email" autoComplete="email" required placeholder="vos@email.com" />
             </label>
-            <label>
-              ¿Cuántos son?
-              <select name="guestCount" defaultValue="1">
-                {[1, 2, 3, 4, 5, 6].map((number) => <option key={number}>{number}</option>)}
-              </select>
-            </label>
             <fieldset className="full attendance">
               <legend>¿Podés venir?</legend>
-              <label><input type="radio" name="attendance" value="yes" required /> Sí, ahí estaré</label>
-              <label><input type="radio" name="attendance" value="no" required /> Esta vez no puedo</label>
+              <label className="attendance-option attendance-yes">
+                <input type="radio" name="attendance" value="yes" required />
+                <PartyPopper aria-hidden="true" />
+                <span>Sí, obvio</span>
+              </label>
+              <label className="attendance-option attendance-no">
+                <input type="radio" name="attendance" value="no" required />
+                <Frown aria-hidden="true" />
+                <span>No puedo</span>
+              </label>
             </fieldset>
             <label className="full">
               Nombres de tus acompañantes
               <input name="guestNames" placeholder="Si venís acompañado/a" />
             </label>
             <label>
-              Restricciones alimentarias
-              <input name="dietary" placeholder="Vegetariano, celíaco…" />
+              ¿Cuántos son?
+              <select name="guestCount" defaultValue="1">
+                {[1, 2, 3, 4, 5, 6].map((number) => <option key={number}>{number}</option>)}
+              </select>
             </label>
             <label>
               ¿Necesitás transporte?
@@ -338,10 +342,14 @@ export default function Home() {
               </select>
             </label>
             <label>
+              Restricciones alimentarias
+              <input name="dietary" placeholder="Vegetariano, celíaco…" />
+            </label>
+            <label>
               Una canción infaltable
               <input name="song" placeholder="Para la pista" />
             </label>
-            <label>
+            <label className="full">
               Mensaje para los novios
               <input name="message" placeholder="Lo que quieras decirnos" />
             </label>
