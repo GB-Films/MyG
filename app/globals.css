@@ -334,7 +334,12 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gift-meta strong { min-height: auto; }
   .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
   .timeline h2 { font-size: clamp(68px, 22vw, 96px); }
-  .timeline { background-position: 66% center; }
+  .timeline {
+    background-image:
+      linear-gradient(180deg, rgba(16, 16, 15, .4), rgba(16, 16, 15, .6) 42%, rgba(16, 16, 15, .72)),
+      url("/banner2-mobile-v01.png");
+    background-position: center top;
+  }
   .timeline-heading { max-width: none; }
   .timeline-rabbits { margin-top: 24px; width: 170px; }
   .timeline ol { max-width: none; width: 100%; }
