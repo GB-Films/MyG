@@ -84,7 +84,7 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
-const WEDDING_ALIAS = "ALIAS.A.CONFIRMAR";
+const WEDDING_ALIAS = "regalosmariaguido";
 
 export default function Home() {
   const [category, setCategory] = useState("Todos");
@@ -485,7 +485,6 @@ export default function Home() {
                   <strong>{money.format(selectedGift.amount)}</strong>
                   <span>Alias</span>
                   <button type="button" onClick={copyAlias}>{WEDDING_ALIAS} <i>{copied ? "Copiado ✓" : "Copiar"}</i></button>
-                  <small>Concepto: REGALO {selectedGift.id.toUpperCase()}</small>
                 </div>
                 <div className="gift-fields">
                   <label>Tu nombre<input name="giverName" required autoComplete="name" /></label>

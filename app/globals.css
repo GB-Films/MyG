@@ -275,7 +275,6 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .transfer-box strong { font-family: Georgia, serif; font-size: 28px; font-weight: 400; text-align: right; }
 .transfer-box button { background: none; border: 0; cursor: pointer; font-size: 20px; font-weight: 800; grid-column: 2; padding: 0; text-align: right; }
 .transfer-box button i { color: var(--red); display: block; font-size: 9px; font-style: normal; letter-spacing: .12em; margin-top: 4px; text-transform: uppercase; }
-.transfer-box small { color: #76726b; grid-column: 1 / -1; margin-top: 10px; }
 .gift-fields { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .gift-fields textarea { resize: vertical; }
 .transfer-note { color: #75716a; font-size: 12px; line-height: 1.5; }
