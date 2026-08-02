@@ -234,6 +234,12 @@ a { color: inherit; }
 .attendance input { height: 1px; left: 0; min-height: 0; opacity: 0; position: absolute; top: 0; width: 1px; }
 .attendance-option:has(input:focus-visible) { outline: 3px solid var(--red); outline-offset: 3px; }
 .attendance-option:has(input:checked)::after { background: var(--red); border: 2px solid currentColor; border-radius: 50%; content: ""; height: 11px; position: absolute; right: 12px; top: 12px; width: 11px; }
+.guest-roster { border: 1px solid var(--ink); margin: 0; padding: 26px; }
+.guest-roster > legend { font-size: 12px; font-weight: 900; letter-spacing: .14em; padding: 0 10px; text-transform: uppercase; }
+.guest-roster label { color: var(--ink); font-size: 12px; letter-spacing: .14em; }
+.guest-roster-head { align-items: end; display: grid; gap: 24px; grid-template-columns: minmax(220px, .7fr) 1fr; }
+.guest-roster-head p { color: #5e5b55; font-family: Georgia, serif; font-size: 17px; font-style: italic; line-height: 1.5; margin: 0 0 13px; }
+.guest-name-grid { display: grid; gap: 24px 28px; grid-template-columns: 1fr 1fr; margin-top: 28px; }
 .submit-button { background: var(--ink); border: 0; color: white; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .12em; min-height: 58px; padding: 18px 24px; text-transform: uppercase; }
 .rsvp-form .submit-button { font-size: 13px; min-height: 64px; padding: 20px 24px; }
 .submit-button:hover { background: #30302e; }
@@ -329,6 +335,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .rsvp-form, .gift-fields { grid-template-columns: 1fr; }
   .rsvp-form > *, .gift-fields > * { grid-column: 1; }
   .attendance { grid-template-columns: 1fr; }
+  .guest-roster { padding: 22px 16px; }
+  .guest-roster-head, .guest-name-grid { grid-template-columns: 1fr; }
   .newspaper { bottom: 11vh; }
   .modal-backdrop { align-items: flex-end; padding: 0; }
   .gift-modal { max-height: 95svh; }

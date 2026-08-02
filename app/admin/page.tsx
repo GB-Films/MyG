@@ -22,7 +22,10 @@ export default async function AdminPage() {
         <p style={{ letterSpacing: ".15em", textTransform: "uppercase", fontSize: 12 }}>Panel privado</p>
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: 56, fontWeight: 400 }}>Falta autorizar tu email.</h1>
         <p>Agregá <strong>{user.email}</strong> a la variable ADMIN_EMAILS del sitio para ver las confirmaciones.</p>
-        <a href={chatGPTSignOutPath("/admin")}>Cerrar sesión</a>
+        <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+          <a href="/api/admin/asistentes" style={{ background: "#10100f", color: "white", padding: "14px 18px", textDecoration: "none", fontWeight: 800, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase" }}>Descargar lista de personas</a>
+          <a href={chatGPTSignOutPath("/admin")}>Cerrar sesión</a>
+        </div>
       </main>
     );
   }

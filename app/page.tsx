@@ -92,6 +92,8 @@ export default function Home() {
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [giftStatus, setGiftStatus] = useState<"idle" | "sending" | "done">("idle");
   const [rsvpStatus, setRsvpStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [rsvpAttendance, setRsvpAttendance] = useState<"" | "yes" | "no">("");
+  const [rsvpGuestCount, setRsvpGuestCount] = useState(1);
   const [copied, setCopied] = useState(false);
 
   const filteredGifts = useMemo(
@@ -163,6 +165,11 @@ export default function Home() {
     event.preventDefault();
     setRsvpStatus("sending");
     const form = new FormData(event.currentTarget);
+    const guestCount = Number(form.get("guestCount") || 1);
+    const guestNames = Array.from(
+      { length: Math.max(0, guestCount - 1) },
+      (_, index) => form.get(`guestName-${index + 2}`),
+    );
     const response = await fetch("/api/rsvp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -170,8 +177,8 @@ export default function Home() {
         fullName: form.get("fullName"),
         email: form.get("rsvpEmail"),
         attendance: form.get("attendance"),
-        guestCount: Number(form.get("guestCount") || 1),
-        guestNames: form.get("guestNames"),
+        guestCount,
+        guestNames,
         dietary: form.get("dietary"),
         transport: form.get("transport"),
         song: form.get("song"),
@@ -299,7 +306,7 @@ export default function Home() {
             <span>✓</span>
             <h3>¡Recibimos tu respuesta!</h3>
             <p>Gracias por confirmar. Nos hace muy felices compartir este día con vos.</p>
-            <button type="button" onClick={() => setRsvpStatus("idle")}>Enviar otra respuesta</button>
+            <button type="button" onClick={() => { setRsvpStatus("idle"); setRsvpAttendance(""); setRsvpGuestCount(1); }}>Enviar otra respuesta</button>
           </div>
         ) : (
           <form className="rsvp-form" onSubmit={submitRsvp}>
@@ -314,26 +321,40 @@ export default function Home() {
             <fieldset className="full attendance">
               <legend>¿Podés venir?</legend>
               <label className="attendance-option attendance-yes">
-                <input type="radio" name="attendance" value="yes" required />
+                <input type="radio" name="attendance" value="yes" required onChange={() => setRsvpAttendance("yes")} />
                 <PartyPopper aria-hidden="true" />
                 <span>Sí, obvio</span>
               </label>
               <label className="attendance-option attendance-no">
-                <input type="radio" name="attendance" value="no" required />
+                <input type="radio" name="attendance" value="no" required onChange={() => { setRsvpAttendance("no"); setRsvpGuestCount(1); }} />
                 <Frown aria-hidden="true" />
                 <span>No puedo</span>
               </label>
             </fieldset>
-            <label className="full">
-              Nombres de tus acompañantes
-              <input name="guestNames" placeholder="Si venís acompañado/a" />
-            </label>
-            <label>
-              ¿Cuántos son?
-              <select name="guestCount" defaultValue="1">
-                {[1, 2, 3, 4, 5, 6].map((number) => <option key={number}>{number}</option>)}
-              </select>
-            </label>
+            {rsvpAttendance === "yes" && (
+              <fieldset className="full guest-roster">
+                <legend>Lista completa de asistentes</legend>
+                <div className="guest-roster-head">
+                  <label>
+                    ¿Cuántos son en total?
+                    <select name="guestCount" value={rsvpGuestCount} onChange={(event) => setRsvpGuestCount(Number(event.target.value))}>
+                      {[1, 2, 3, 4, 5, 6].map((number) => <option key={number}>{number}</option>)}
+                    </select>
+                  </label>
+                  <p>Tu nombre de arriba ya cuenta como Persona 1.</p>
+                </div>
+                {rsvpGuestCount > 1 && (
+                  <div className="guest-name-grid">
+                    {Array.from({ length: rsvpGuestCount - 1 }, (_, index) => (
+                      <label key={index}>
+                        Persona {index + 2} · nombre y apellido
+                        <input name={`guestName-${index + 2}`} required placeholder={`Nombre completo de la persona ${index + 2}`} />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </fieldset>
+            )}
             <label>
               ¿Necesitás transporte?
               <select name="transport" defaultValue="no">
