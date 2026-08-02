@@ -89,7 +89,8 @@ a { color: inherit; }
   pointer-events: none;
   position: absolute;
 }
-.hero-copy { left: 6vw; position: absolute; top: 23%; z-index: 2; }
+.hero-copy { left: 6vw; position: absolute; top: 12%; z-index: 2; }
+.hero-lockup { display: block; height: auto; width: min(650px, 48vw); }
 .eyebrow {
   font-size: 11px;
   font-weight: 800;
@@ -98,17 +99,13 @@ a { color: inherit; }
   text-transform: uppercase;
 }
 .eyebrow.light { color: rgba(255,255,255,.8); }
-.hero h1, .intro h2, .timeline h2, .gifts h2, .rsvp h2, .gift-modal h2 {
+.intro h2, .timeline h2, .gifts h2, .rsvp h2, .gift-modal h2 {
   font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: 0;
   line-height: .78;
   margin: 0;
 }
-.hero h1 { font-size: clamp(92px, 14vw, 202px); text-shadow: 0 2px 18px rgba(0,0,0,.28); }
-.hero-copy > .eyebrow { margin-bottom: 38px; }
-.hero-ampersand { display: inline-block; filter: invert(1); height: .56em; image-rendering: auto; margin: 0 .08em; object-fit: contain; vertical-align: -.05em; width: .51em; }
-.hero-note { font-family: Georgia, serif; font-size: clamp(18px, 2vw, 28px); font-style: italic; margin: 48px 0 0 8px; }
 .newspaper {
   background: #eee9dc;
   bottom: 8vh;
@@ -296,11 +293,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .topbar { height: 58px; padding: 0 20px; }
   .topbar nav a:not(.nav-rsvp) { display: none; }
   .nav-rsvp { padding: 9px 13px; }
-  .hero-copy { left: 22px; top: 19%; }
-  .hero h1 { font-size: clamp(68px, 24vw, 120px); }
-  .hero-note { font-size: 18px; }
-  .hero-copy > .eyebrow { margin-bottom: 30px; }
-  .hero-note { margin-top: 38px; }
+  .hero-copy { left: 22px; top: 14%; }
+  .hero-lockup { width: min(88vw, 560px); }
   .newspaper { bottom: 12vh; right: -10px; width: 265px; }
   .newspaper > strong { font-size: 40px; }
   .scroll-cue { bottom: 24px; left: 22px; }

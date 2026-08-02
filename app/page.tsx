@@ -212,12 +212,7 @@ export default function Home() {
         <div className="hero-photo" aria-hidden="true" />
         <div className="hero-grain" aria-hidden="true" />
         <div className="hero-copy">
-          <p className="eyebrow light">21 · 11 · 2026 — Buenos Aires</p>
-          <h1>
-            María <img className="hero-ampersand" src="/ampersand-hq.png" alt="y" />
-            <br /> Guido
-          </h1>
-          <p className="hero-note">Te invitamos a celebrar nuestro amor.</p>
+          <img className="hero-lockup" src="/hero-lockup.png" alt="M y G · María y Guido · 21.11.2026" />
         </div>
         <div className="newspaper" aria-label="Reserva la fecha">
           <div className="paper-top">
