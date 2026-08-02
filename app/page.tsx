@@ -66,7 +66,7 @@ const gifts: Gift[] = [
   gift("regalo-021", "Picnic en la plaza", 25000, "Experiencias", "/gifts/Picnic_v01.png", "Manta, sol y algo rico: el plan perfecto. ¡Gracias!"),
   gift("regalo-022", "Safari por Africa", 750000, "Experiencias", "/gifts/safari_v01.png", "Prometemos volver con muchas fotos y todos los miembros intactos. ¡Gracias por esta aventura!"),
   gift("regalo-005", "Cena en la Torre Eiffel", 450000, "Luna de miel", "/gifts/TorreEiffel_v01.png", "Lo bien que vamos a comer. ¡Mil gracias, en serio! Después les mandamos foto."),
-  gift("regalo-007", "Clase de Doble de Riesgo", 180000, "Experiencias", "/gifts/ClaseDoble_v01.png", "Si salimos enteros, les mandamos el video. ¡Gracias por la adrenalina!"),
+  gift("regalo-007", "Clase de Doble de Riesgo", 180000, "Experiencias", "/gifts/ClaseDoble_v02.png", "Si salimos enteros, les mandamos el video. ¡Gracias por la adrenalina!"),
   gift("regalo-025", "Visitar el Titanic", 250000, "Experiencias", "/gifts/titanic_v01.png", "Si encontramos el collar hacemos mitad y mitad. ¡Gracias!"),
   gift("regalo-010", "FotoLibro Luna de Miel", 120000, "Nuestro hogar", "/gifts/LibroFotos_v01.png", "Que nunca falten las fotos impresas. ¡Gracias!"),
   gift("regalo-027", "TourVinos Mendoza", 550000, "Luna de miel", "/gifts/Mendoza_v01.png", "No nos gusta el vino, pero vamos a hacer el esfuerzo igual. ¡Gracias!"),
