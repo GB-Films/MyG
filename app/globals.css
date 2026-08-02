@@ -170,7 +170,7 @@ a { color: inherit; }
 .timeline h2 { color: white; font-size: clamp(72px, 8vw, 126px); }
 .timeline-rabbits {
   bottom: 26px;
-  filter: invert(1);
+  filter: invert(1) contrast(1.12);
   height: auto;
   left: 5.5vw;
   mix-blend-mode: screen;

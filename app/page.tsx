@@ -281,7 +281,7 @@ export default function Home() {
           <p className="eyebrow light">El itinerario</p>
           <h2 id="timeline-title">Así se vivirá<br />este mágico día.</h2>
         </div>
-        <img className="timeline-rabbits" src="/rabbits-nyf.png" alt="Dos conejos abrazados" />
+        <img className="timeline-rabbits" src="/rabbits-nyf-v2.png" alt="Dos conejos abrazados" />
         <ol>
           <li><time>17:30</time><span>Recepción</span><em>Empezamos a brindar</em></li>
           <li><time>18:00</time><span>Ceremonia</span><em>El sí más esperado</em></li>
