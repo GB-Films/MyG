@@ -312,7 +312,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .facts article { grid-template-columns: 84px 1fr; }
   .timeline { padding: 85px 22px; }
   .timeline-heading { max-width: 62%; padding-top: 20px; position: static; }
-  .timeline-rabbits { bottom: auto; left: auto; margin: 34px 0 0 3%; position: static; width: 200px; }
+  .timeline-rabbits { bottom: auto; justify-self: center; left: auto; margin: 34px auto 0; position: static; width: 200px; }
   .timeline ol { margin: 60px 0 0 auto; width: min(68%, 700px); }
   .timeline li { grid-template-columns: 78px 1fr; }
   .gifts { padding: 90px 22px; }
@@ -334,6 +334,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gift-meta strong { min-height: auto; }
   .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
   .timeline h2 { font-size: clamp(68px, 22vw, 96px); }
+  .timeline { background-position: 66% center; }
   .timeline-heading { max-width: none; }
   .timeline-rabbits { margin-top: 24px; width: 170px; }
   .timeline ol { max-width: none; width: 100%; }
