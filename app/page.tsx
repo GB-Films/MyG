@@ -214,7 +214,7 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow light">21 · 11 · 2026 — Buenos Aires</p>
           <h1>
-            María <i>&amp;</i>
+            María <img className="hero-ampersand" src="/ampersand-hq.png" alt="y" />
             <br /> Guido
           </h1>
           <p className="hero-note">Te invitamos a celebrar nuestro amor.</p>

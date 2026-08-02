@@ -106,8 +106,9 @@ a { color: inherit; }
   margin: 0;
 }
 .hero h1 { font-size: clamp(92px, 14vw, 202px); text-shadow: 0 2px 18px rgba(0,0,0,.28); }
-.hero h1 i { color: var(--red); font-size: .72em; }
-.hero-note { font-family: Georgia, serif; font-size: clamp(18px, 2vw, 28px); font-style: italic; margin: 28px 0 0 8px; }
+.hero-copy > .eyebrow { margin-bottom: 38px; }
+.hero-ampersand { display: inline-block; filter: invert(1); height: .56em; image-rendering: auto; margin: 0 .08em; object-fit: contain; vertical-align: -.05em; width: .51em; }
+.hero-note { font-family: Georgia, serif; font-size: clamp(18px, 2vw, 28px); font-style: italic; margin: 48px 0 0 8px; }
 .newspaper {
   background: #eee9dc;
   bottom: 8vh;
@@ -298,6 +299,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .hero-copy { left: 22px; top: 19%; }
   .hero h1 { font-size: clamp(68px, 24vw, 120px); }
   .hero-note { font-size: 18px; }
+  .hero-copy > .eyebrow { margin-bottom: 30px; }
+  .hero-note { margin-top: 38px; }
   .newspaper { bottom: 12vh; right: -10px; width: 265px; }
   .newspaper > strong { font-size: 40px; }
   .scroll-cue { bottom: 24px; left: 22px; }
