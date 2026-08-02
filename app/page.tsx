@@ -201,6 +201,7 @@ export default function Home() {
         </a>
         <nav aria-label="Navegación principal">
           <a href="#info">El día</a>
+          <a href="#itinerario">Itinerario</a>
           <a className="nav-rsvp" href="#confirmar">
             Confirmar
           </a>
@@ -453,6 +454,7 @@ export default function Home() {
 
       <div className="mobile-nav" aria-label="Accesos rápidos">
         <a href="#info">El día</a>
+        <a href="#itinerario">Itinerario</a>
         <a href="#confirmar">Confirmar</a>
         <a href="#regalos">Regalos</a>
       </div>
