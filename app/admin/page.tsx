@@ -1,5 +1,5 @@
-import { ensureWeddingSchema, getWeddingEnv } from "../../db";
-import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
+import { ensureWeddingSchema } from "../../db";
+import { isAdminAuthenticated } from "../admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,21 +11,30 @@ type GiftRow = {
   id: string; gift_name: string; amount: number; giver_name: string; email: string; dedication: string; created_at: string;
 };
 
-export default async function AdminPage() {
-  const user = await requireChatGPTUser("/admin");
-  const allowlist = (getWeddingEnv().ADMIN_EMAILS ?? "")
-    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const authenticated = await isAdminAuthenticated();
+  const params = await searchParams;
 
-  if (!allowlist.includes(user.email.toLowerCase())) {
+  if (!authenticated) {
     return (
-      <main style={{ fontFamily: "Arial, sans-serif", padding: "10vh 8vw", maxWidth: 760 }}>
-        <p style={{ letterSpacing: ".15em", textTransform: "uppercase", fontSize: 12 }}>Panel privado</p>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: 56, fontWeight: 400 }}>Falta autorizar tu email.</h1>
-        <p>Agregá <strong>{user.email}</strong> a la variable ADMIN_EMAILS del sitio para ver las confirmaciones.</p>
-        <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-          <a href="/api/admin/asistentes" style={{ background: "#10100f", color: "white", padding: "14px 18px", textDecoration: "none", fontWeight: 800, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase" }}>Descargar lista de personas</a>
-          <a href={chatGPTSignOutPath("/admin")}>Cerrar sesión</a>
-        </div>
+      <main style={{ minHeight: "100vh", background: "#10100f", color: "white", display: "grid", placeItems: "center", padding: 24, fontFamily: "Arial, sans-serif" }}>
+        <section style={{ width: "min(460px, 100%)", border: "1px solid rgba(255,255,255,.35)", padding: "48px 42px" }}>
+          <p style={{ letterSpacing: ".16em", textTransform: "uppercase", fontSize: 11 }}>María & Guido · Panel privado</p>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 52, fontWeight: 400, lineHeight: 1, margin: "20px 0 14px" }}>Todo en un solo lugar.</h1>
+          <p style={{ color: "#c9c7c1", lineHeight: 1.6 }}>Ingresen para ver confirmaciones, acompañantes y regalos declarados.</p>
+          {params.error === "1" && <p role="alert" style={{ color: "#f40009", fontWeight: 700 }}>El usuario o la clave no son correctos.</p>}
+          <form action="/api/admin/login" method="post" style={{ display: "grid", gap: 22, marginTop: 30 }}>
+            <label style={{ display: "grid", gap: 8, fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase" }}>
+              Usuario
+              <input name="username" autoComplete="username" required style={{ background: "transparent", border: 0, borderBottom: "1px solid #777", color: "white", fontFamily: "Georgia, serif", fontSize: 21, padding: "11px 0", outline: "none" }} />
+            </label>
+            <label style={{ display: "grid", gap: 8, fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase" }}>
+              Clave
+              <input name="password" type="password" autoComplete="current-password" required style={{ background: "transparent", border: 0, borderBottom: "1px solid #777", color: "white", fontFamily: "Georgia, serif", fontSize: 21, padding: "11px 0", outline: "none" }} />
+            </label>
+            <button type="submit" style={{ background: "#f40009", border: 0, color: "white", cursor: "pointer", fontWeight: 900, letterSpacing: ".1em", marginTop: 8, padding: 16, textTransform: "uppercase" }}>Entrar al panel</button>
+          </form>
+        </section>
       </main>
     );
   }
@@ -43,7 +52,10 @@ export default async function AdminPage() {
     <main style={{ fontFamily: "Arial, sans-serif", padding: "48px 4vw", background: "#f2efe7", minHeight: "100vh" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 20, flexWrap: "wrap" }}>
         <div><p style={{ letterSpacing: ".15em", textTransform: "uppercase", fontSize: 11 }}>María & Guido</p><h1 style={{ fontFamily: "Georgia, serif", fontSize: 58, fontWeight: 400, margin: 0 }}>Panel del casamiento</h1></div>
-        <a href={chatGPTSignOutPath("/admin")}>Cerrar sesión</a>
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <a href="/api/admin/asistentes" style={{ color: "inherit", fontWeight: 700 }}>Descargar asistentes (CSV)</a>
+          <form action="/api/admin/logout" method="post"><button type="submit" style={{ background: "transparent", border: 0, cursor: "pointer", textDecoration: "underline" }}>Cerrar sesión</button></form>
+        </div>
       </header>
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 16, margin: "42px 0" }}>
         {[['Confirmaciones', rsvps.length], ['Invitados que vienen', attending], ['Regalos avisados', giftRows.length]].map(([label, value]) => <article key={String(label)} style={{ background: "white", padding: 24, border: "1px solid #d2cec4" }}><small>{label}</small><strong style={{ display: "block", fontFamily: "Georgia,serif", fontSize: 48, marginTop: 10 }}>{value}</strong></article>)}

@@ -1,6 +1,11 @@
 import { env } from "cloudflare:workers";
 
-type WeddingEnv = { DB: D1Database; ADMIN_EMAILS?: string };
+type WeddingEnv = {
+  DB: D1Database;
+  ADMIN_USERNAME?: string;
+  ADMIN_PASSWORD?: string;
+  ADMIN_SESSION_SECRET?: string;
+};
 
 export function getWeddingEnv() {
   return env as unknown as WeddingEnv;

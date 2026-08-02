@@ -1,5 +1,5 @@
-import { ensureWeddingSchema, getWeddingEnv } from "../../../../db";
-import { chatGPTSignInPath, getChatGPTUser } from "../../../chatgpt-auth";
+import { ensureWeddingSchema } from "../../../../db";
+import { isAdminRequest } from "../../../admin-auth";
 
 type RsvpRow = {
   full_name: string;
@@ -17,16 +17,7 @@ type RsvpRow = {
 const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export async function GET(request: Request) {
-  const user = await getChatGPTUser();
-  if (!user) {
-    return Response.redirect(new URL(chatGPTSignInPath("/admin"), request.url), 302);
-  }
-
-  const allowlist = (getWeddingEnv().ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-  if (!allowlist.includes(user.email.toLowerCase())) {
+  if (!await isAdminRequest(request)) {
     return Response.json({ error: "No autorizado" }, { status: 403 });
   }
 
