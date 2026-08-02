@@ -145,11 +145,15 @@ a { color: inherit; }
 .facts article > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .fact-heading { align-items: center; display: flex; gap: 18px; }
 .fact-icon { flex: 0 0 auto; height: 38px; transform: rotate(-3deg); width: 38px; }
-.dress-icon { flex: 0 0 auto; height: 38px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.55; transform: rotate(-2deg); width: 38px; }
+.hanger-icon { flex: 0 0 auto; height: 38px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.55; transform: rotate(-2deg); width: 38px; }
 .facts article:nth-child(2) .fact-icon { transform: rotate(4deg); }
 .facts h3 { font-family: Georgia, serif; font-size: clamp(25px, 3vw, 42px); font-weight: 400; letter-spacing: -.04em; margin: 0; }
 .facts p { color: #5e5b55; grid-column: 2; line-height: 1.6; margin: 0; max-width: 460px; }
 .facts a { font-size: 11px; font-weight: 800; grid-column: 2; letter-spacing: .1em; text-transform: uppercase; }
+.facts a.map-button { align-items: center; background: var(--ink); border: 1px solid var(--ink); color: white; display: inline-flex; gap: 10px; justify-self: start; padding: 12px 16px; text-decoration: none; transition: background .2s ease, color .2s ease; }
+.facts a.map-button:hover { background: white; color: var(--ink); }
+.map-button svg { height: 17px; width: 17px; }
+.map-button span { margin-left: 3px; }
 
 .timeline {
   background-color: var(--ink);

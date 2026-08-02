@@ -1,14 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Frown, MapPin, PartyPopper } from "lucide-react";
+import { CalendarDays, Frown, MapPin, Navigation, PartyPopper } from "lucide-react";
 
-function DressIcon({ className = "" }: { className?: string }) {
+function HangerIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 3.5c.8 1.6 1.8 2.4 3 2.4s2.2-.8 3-2.4" />
-      <path d="M9 3.5 7.7 9h8.6L15 3.5" />
-      <path d="m8.5 9-3 11.5h13L15.5 9" />
+      <path d="M12 8c0-1.7 2.3-1.8 2.3-3.8a2.3 2.3 0 1 0-4.6 0" />
+      <path d="m12 8-8.4 6.4c-.7.5-.3 1.6.6 1.6h15.6c.9 0 1.3-1.1.6-1.6L12 8Z" />
     </svg>
   );
 }
@@ -253,7 +252,7 @@ export default function Home() {
               <CalendarDays className="fact-icon" strokeWidth={1.55} aria-hidden="true" />
               <h3>21 de noviembre</h3>
             </div>
-            <p>Sábado · Recepción desde las 17:30</p>
+            <p>Sábado · Los esperamos a las 17:30</p>
           </article>
           <article>
             <span>02 / Lugar</span>
@@ -262,17 +261,19 @@ export default function Home() {
               <h3>Darwin Tortugas</h3>
             </div>
             <p>Salón Laguna · Fiesta y ceremonia en el mismo lugar.</p>
-            <a href="https://maps.google.com/?q=Darwin+Tortugas" target="_blank" rel="noreferrer">
-              Cómo llegar ↗
+            <a className="map-button" href="https://maps.google.com/?q=Darwin+Tortugas" target="_blank" rel="noreferrer">
+              <Navigation aria-hidden="true" />
+              Ver ubicación en Google Maps
+              <span aria-hidden="true">↗</span>
             </a>
           </article>
           <article>
             <span>03 / Código</span>
             <div className="fact-heading">
-              <DressIcon className="dress-icon" />
-              <h3>Elegantes, pero ustedes</h3>
+              <HangerIcon className="hanger-icon" />
+              <h3>Elegantes</h3>
             </div>
-            <p>Traigan ganas de bailar. El resto lo ponemos nosotros.</p>
+            <p>Blanco reservado para la novia<br />Verde para la familia del novio<br />Azul para las damas de honor.</p>
           </article>
         </div>
       </section>
