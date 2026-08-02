@@ -163,7 +163,7 @@ a { color: inherit; }
   display: grid;
   grid-template-columns: .9fr 1.1fr;
   min-height: 700px;
-  padding: 70px 6vw;
+  padding: 110px 6vw;
   position: relative;
 }
 .timeline-heading { align-self: start; padding-top: 28px; position: static; }
@@ -310,7 +310,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .intro { gap: 70px; min-height: auto; padding: 90px 22px; }
   .wedding-rings-image { margin-inline: auto; width: min(290px, 84%); }
   .facts article { grid-template-columns: 84px 1fr; }
-  .timeline { padding: 70px 22px; }
+  .timeline { padding: 85px 22px; }
   .timeline-heading { max-width: 62%; padding-top: 20px; position: static; }
   .timeline-rabbits { bottom: auto; justify-self: center; left: auto; margin: 34px auto 0; position: static; width: 200px; }
   .timeline ol { margin: 42px 0 0 auto; width: min(68%, 700px); }

@@ -286,8 +286,8 @@ export default function Home() {
           <li><time>17:30</time><span>Recepción</span><em>Los esperamos previo a la ceremonia</em></li>
           <li><time>18:00</time><span>Ceremonia</span><em>El sí más esperado</em></li>
           <li><time>19:00</time><span>Cóctel</span><em>Comida, fotos y abrazos</em></li>
-          <li><time>20:30</time><span>ARRANCA LA FIESTA</span><em>Hay morfi, baile y mucho más!</em></li>
-          <li><time>3:30</time><span>FIN</span><em>... o hasta que nos saquen</em></li>
+          <li><time>20:30</time><span>Arranca la fiesta</span><em>Hay morfi, baile y mucho más!</em></li>
+          <li><time>3:30</time><span>Fin</span><em>... o hasta que nos saquen</em></li>
         </ol>
         <img className="timeline-rabbits" src="/rabbits-nyf-v2.png" alt="Dos conejos abrazados" />
       </section>
