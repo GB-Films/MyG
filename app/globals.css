@@ -190,7 +190,7 @@ a { color: inherit; }
 .rsvp { background: var(--paper); color: var(--ink); display: grid; gap: 8vw; grid-template-columns: .75fr 1.25fr; min-height: 760px; padding: 120px 6vw; }
 .rsvp-intro { position: relative; }
 .rsvp h2 { font-size: clamp(108px, 12vw, 180px); }
-.rsvp-intro > p:not(.eyebrow) { line-height: 1.7; max-width: 400px; }
+.rsvp-car-image { display: block; height: auto; margin: 24px 0 0 18px; width: min(220px, 78%); }
 .rsvp-form { align-content: start; display: grid; gap: 28px 22px; grid-template-columns: 1fr 1fr; }
 .rsvp-form label, .gift-fields label { color: #4f4d49; display: flex; font-size: 10px; font-weight: 800; gap: 9px; letter-spacing: .12em; flex-direction: column; text-transform: uppercase; }
 .rsvp-form input, .rsvp-form select, .gift-fields input, .gift-fields textarea {

@@ -271,10 +271,7 @@ export default function Home() {
         <div className="rsvp-intro">
           <p className="eyebrow">RSVP · antes del 20/10</p>
           <h2>¿Venís?</h2>
-          <p>
-            Queremos guardar un lugar para vos. Completá una confirmación por
-            grupo o familia.
-          </p>
+          <img className="rsvp-car-image" src="/rsvp-car-exact.png" alt="Pareja recién casada alejándose en auto" />
         </div>
 
         {rsvpStatus === "done" ? (
