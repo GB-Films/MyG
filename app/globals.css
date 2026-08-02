@@ -191,6 +191,12 @@ a { color: inherit; }
 .gifts { background: var(--ink); color: white; padding: 120px 4vw; }
 .section-head { align-items: end; display: grid; gap: 12vw; grid-template-columns: 1fr 1fr; }
 .section-head > p { color: #c9c7c1; line-height: 1.8; margin: 0 0 12px; max-width: 530px; }
+.gift-note { align-self: center; border: 1px solid rgba(255,255,255,.42); justify-self: end; margin: 10px 2vw 0 0; max-width: 560px; padding: 34px 42px 30px; position: relative; transform: rotate(-1.4deg); }
+.gift-note::after { background: var(--red); content: ""; height: 3px; left: 34px; position: absolute; top: -2px; transform: rotate(2deg); width: 84px; }
+.gift-note p { color: #e2e0db; font-family: Georgia, serif; font-size: clamp(17px, 1.45vw, 22px); line-height: 1.55; margin: 0; }
+.gift-note-opening { color: white; display: inline-block; font-family: var(--font-display); font-size: clamp(46px, 4.7vw, 70px); line-height: .72; margin: 0 8px 14px -12px; transform: rotate(-2deg); }
+.gift-note strong { color: var(--red); display: inline-block; font-family: var(--font-display); font-size: 1.9em; font-weight: 400; line-height: .6; margin: 0 .08em; transform: rotate(-5deg) translateY(.08em); }
+.gift-note-heart { color: var(--red); font-size: 28px; position: absolute; right: 24px; top: -19px; transform: rotate(12deg); }
 .gift-filters { border-bottom: 1px solid rgba(255,255,255,.22); display: flex; gap: 28px; margin: 70px 0 38px; overflow-x: auto; }
 .gift-filters button { background: none; border: 0; color: #94918b; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: .13em; padding: 0 0 14px; text-transform: uppercase; white-space: nowrap; }
 .gift-filters button.active { border-bottom: 3px solid white; color: white; }
@@ -321,6 +327,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .timeline li { grid-template-columns: 72px 1fr; padding: 16px 0; }
   .gifts { padding: 90px 22px; }
   .section-head { gap: 30px; grid-template-columns: 1fr; }
+  .gift-note { justify-self: start; margin: 10px 14px 0 8px; max-width: 620px; }
   .gift-grid { grid-template-columns: 1fr 1fr; }
   .rsvp { gap: 60px; padding: 90px 22px; }
   .gift-modal { grid-template-columns: 1fr; }
@@ -335,6 +342,8 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 @media (max-width: 580px) {
   .hero-photo { background-position: 58% center; }
   .gift-grid { grid-template-columns: 1fr; }
+  .gift-note { margin-inline: 4px; padding: 30px 24px 26px; transform: rotate(-.8deg); }
+  .gift-note-opening { margin-left: -5px; }
   .gift-meta strong { min-height: auto; }
   .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
   .timeline h2 { font-size: clamp(58px, 18vw, 78px); }

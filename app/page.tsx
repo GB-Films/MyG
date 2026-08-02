@@ -386,12 +386,15 @@ export default function Home() {
             <p className="eyebrow light">Nuestra lista</p>
             <h2>Regalá un<br />recuerdo.</h2>
           </div>
-          <p>
-            El mejor regalo es compartir este día con ustedes. Si además tienen
-            ganas de hacernos un regalo, pueden elegir algo de esta lista para
-            acompañarnos en esta nueva etapa. Pero, de verdad, lo más importante
-            para nosotros es que estén ahí.
-          </p>
+          <aside className="gift-note">
+            <span className="gift-note-heart" aria-hidden="true">♥</span>
+            <p>
+              <span className="gift-note-opening">El mejor regalo</span> es compartir
+              este día con ustedes, <strong>peeeeero</strong> si de casualidad están con
+              ganas de querer hacernos un regalo, pueden elegir algo de esta lista
+              para acompañarnos en esta nueva etapa.
+            </p>
+          </aside>
         </div>
 
         <div className="gift-filters" role="group" aria-label="Filtrar regalos">
