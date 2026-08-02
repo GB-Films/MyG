@@ -43,13 +43,13 @@ function gift(
 }
 
 const gifts: Gift[] = [
-  gift("regalo-026", "Pisar la Luna", 93000, "Luna de miel", "/gifts/luna_v01.png", "Nos acaba de llegar un mensaje de la NASA avisándonos de la misión. ¡Gracias por hacer esto posible! Después les mandamos video."),
-  gift("regalo-024", "Noche de truco con Messi y De Paul", 300000, "Nuestro hogar", "/gifts/truco con messi.jpg", "Ahora solo falta que Messi y De Paul acepten la revancha. ¡Gracias por semejante mesa!"),
   gift("regalo-023", "Vuelo en globo aerostático por Turquía", 600000, "Experiencias", "/gifts/globo_v01.png", "Nos regalaron una vista que no vamos a olvidar nunca. ¡Mil gracias!"),
-  gift("regalo-028", "Un asado de domingo", 150000, "Nuestro hogar", "/gifts/asado_v01.avif", "Están invitados a ese asado, obviamente. ¡Gracias!"),
   gift("regalo-029", "Van para recorrer el país", 3500000, "Luna de miel", "/gifts/vanMundo_v01.png", "¡No lo podemos creer! Mil gracias de verdad; ahora, a viajar por todo el país."),
-  gift("regalo-006", "Combo Doble Cuarto de Libra", 46000, "Nuestro hogar", "/gifts/dobleCuarto.png", "No podía faltar. ¡Gracias!"),
   gift("regalo-012", "Excursión con gorilas", 1200000, "Experiencias", "/gifts/gorilas_v01.png", "Bueno, esperemos no morir. ¡Gracias por impulsarnos a esta aventura!"),
+  gift("regalo-028", "Un asado de domingo", 150000, "Nuestro hogar", "/gifts/asado_v01.avif", "Están invitados a ese asado, obviamente. ¡Gracias!"),
+  gift("regalo-024", "Noche de truco con Messi y De Paul", 300000, "Nuestro hogar", "/gifts/truco_v01.png", "Ahora solo falta que Messi y De Paul acepten la revancha. ¡Gracias por semejante mesa!"),
+  gift("regalo-006", "Combo Doble Cuarto de Libra", 46000, "Nuestro hogar", "/gifts/dobleCuarto.png", "No podía faltar. ¡Gracias!"),
+  gift("regalo-026", "Pisar la Luna", 93000, "Luna de miel", "/gifts/luna_v01.png", "Nos acaba de llegar un mensaje de la NASA avisándonos de la misión. ¡Gracias por hacer esto posible! Después les mandamos video."),
   gift("regalo-008", "Entradas para la F1", 450000, "Experiencias", "/gifts/F1_v01.png", "Cuando tengamos la foto con Franco se las pasamos. ¡Gracias!"),
   gift("regalo-009", "Máquina de arcade", 3000000, "Nuestro hogar", "/gifts/Arcade_v01.png", "¡Nos llegó el mensaje de Mercado Libre: ya está en camino! Mil gracias de verdad; están invitados a jugar cuando quieran."),
   gift("regalo-004", "Camión de Coca-Cola", 350000, "Nuestro hogar", "/gifts/CamionCoca_v01.png", "¡Coca de por vida, seeeee! ¡Gracias!"),
