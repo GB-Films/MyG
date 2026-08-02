@@ -147,9 +147,7 @@ a { color: inherit; }
 .facts article > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .fact-heading { align-items: center; display: flex; gap: 18px; }
 .fact-icon { flex: 0 0 auto; height: 38px; transform: rotate(-3deg); width: 38px; }
-.dance-icon { flex: 0 0 auto; height: 38px; position: relative; transform: rotate(-2deg); width: 38px; }
-.dance-icon-people { height: 34px; left: 0; position: absolute; top: 4px; width: 34px; }
-.dance-icon-note { background: white; height: 15px; position: absolute; right: -1px; top: -1px; width: 15px; }
+.dress-icon { flex: 0 0 auto; height: 38px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.55; transform: rotate(-2deg); width: 38px; }
 .facts article:nth-child(2) .fact-icon { transform: rotate(4deg); }
 .facts h3 { font-family: Georgia, serif; font-size: clamp(25px, 3vw, 42px); font-weight: 400; letter-spacing: -.04em; margin: 0; }
 .facts p { color: #5e5b55; grid-column: 2; line-height: 1.6; margin: 0; max-width: 460px; }

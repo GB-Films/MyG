@@ -1,7 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, MapPin, Music2, UsersRound } from "lucide-react";
+import { CalendarDays, MapPin } from "lucide-react";
+
+function DressIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 3.5c.8 1.6 1.8 2.4 3 2.4s2.2-.8 3-2.4" />
+      <path d="M9 3.5 7.7 9h8.6L15 3.5" />
+      <path d="m8.5 9-3 11.5h13L15.5 9" />
+    </svg>
+  );
+}
 
 type GiftCategory = "Luna de miel" | "Nuestro hogar" | "Experiencias";
 
@@ -256,10 +266,7 @@ export default function Home() {
           <article>
             <span>03 / Código</span>
             <div className="fact-heading">
-              <span className="dance-icon" aria-hidden="true">
-                <UsersRound className="dance-icon-people" strokeWidth={1.55} />
-                <Music2 className="dance-icon-note" strokeWidth={1.55} />
-              </span>
+              <DressIcon className="dress-icon" />
               <h3>Elegantes, pero ustedes</h3>
             </div>
             <p>Traigan ganas de bailar. El resto lo ponemos nosotros.</p>
