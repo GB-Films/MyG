@@ -10,9 +10,8 @@
 
 :root {
   --ink: #10100f;
-  --paper: #f2efe7;
+  --paper: #ffffff;
   --red: #f40009;
-  --acid: #d9ff43;
   --line: rgba(16, 16, 15, 0.2);
   --font-display: "Meow Script", cursive;
 }
@@ -47,13 +46,16 @@ a { color: inherit; }
   z-index: 40;
 }
 .monogram, .footer-mark {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 400;
-  letter-spacing: 0;
+  align-items: center;
+  display: flex;
+  height: 54px;
+  justify-content: center;
+  overflow: hidden;
   text-decoration: none;
+  width: 96px;
 }
-.monogram span, .footer-mark span { color: var(--red); font-style: italic; margin: 0 2px; }
+.monogram img, .footer-mark img { display: block; transform: scale(1.7); width: 100%; }
+.monogram img { filter: invert(1); }
 .topbar nav { align-items: center; display: flex; gap: 34px; }
 .topbar nav a {
   font-size: 12px;
@@ -123,7 +125,7 @@ a { color: inherit; }
 .newspaper p { font-family: Georgia, serif; font-size: 16px; margin: 12px 0 10px; }
 .newspaper b { font-size: 13px; letter-spacing: .18em; }
 .scroll-cue { bottom: 36px; font-size: 10px; font-weight: 800; left: 6vw; letter-spacing: .18em; position: absolute; text-decoration: none; text-transform: uppercase; z-index: 4; }
-.scroll-cue span { color: var(--acid); font-size: 18px; margin-left: 8px; }
+.scroll-cue span { color: var(--red); font-size: 18px; margin-left: 8px; }
 
 .intro { display: grid; grid-template-columns: 1fr 1.25fr; min-height: 720px; padding: 120px 6vw; }
 .intro-title { position: relative; }
@@ -178,7 +180,7 @@ a { color: inherit; }
 .gift-image-wrap { aspect-ratio: 4 / 3; display: block; overflow: hidden; position: relative; }
 .gift-card img { filter: grayscale(.25); height: 100%; object-fit: cover; transition: transform .5s ease, filter .5s ease; width: 100%; }
 .gift-card button:hover img { filter: grayscale(0); transform: scale(1.035); }
-.gift-number { background: var(--acid); color: var(--ink); font-size: 11px; font-weight: 900; left: 12px; padding: 8px; position: absolute; top: 12px; }
+.gift-number { background: var(--red); color: white; font-size: 11px; font-weight: 900; left: 12px; padding: 8px; position: absolute; top: 12px; }
 .gift-meta { border-top: 1px solid rgba(255,255,255,.22); display: block; margin-top: 14px; padding-top: 12px; }
 .gift-meta small { color: #aaa7a1; display: block; font-size: 9px; font-weight: 800; letter-spacing: .13em; margin-bottom: 8px; text-transform: uppercase; }
 .gift-meta strong { display: block; font-family: Georgia, serif; font-size: clamp(20px, 2vw, 30px); font-weight: 400; letter-spacing: -.04em; line-height: 1.05; min-height: 66px; }
@@ -222,7 +224,7 @@ a { color: inherit; }
 .submit-button:hover { background: #30302e; }
 .submit-button:disabled { cursor: wait; opacity: .6; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
-.success-card > span { align-items: center; background: var(--acid); border-radius: 50%; display: inline-flex; font-size: 30px; height: 64px; justify-content: center; width: 64px; }
+.success-card > span { align-items: center; background: var(--red); border-radius: 50%; color: white; display: inline-flex; font-size: 30px; height: 64px; justify-content: center; width: 64px; }
 .success-card h3 { font-family: Georgia, serif; font-size: 40px; font-weight: 400; margin: 24px 0 12px; }
 .success-card p { color: #66625c; line-height: 1.6; }
 .success-card button, .modal-success button { background: none; border: 0; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .1em; margin-top: 20px; text-decoration: underline; text-transform: uppercase; }
@@ -298,7 +300,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   footer { padding-bottom: 100px; }
   .mobile-nav { background: rgba(16,16,15,.94); bottom: 12px; color: white; display: grid; grid-template-columns: repeat(3,1fr); left: 12px; position: fixed; right: 12px; z-index: 45; }
   .mobile-nav a { font-size: 10px; font-weight: 800; letter-spacing: .08em; padding: 16px 8px; text-align: center; text-decoration: none; text-transform: uppercase; }
-  .mobile-nav a:last-child { background: var(--acid); color: var(--ink); }
+  .mobile-nav a:last-child { background: var(--red); color: white; }
 }
 
 @media (max-width: 580px) {

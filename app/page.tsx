@@ -179,7 +179,7 @@ export default function Home() {
     <main>
       <header className="topbar">
         <a className="monogram" href="#inicio" aria-label="Ir al inicio">
-          M<span>+</span>G
+          <img src="/logo-myg.png" alt="" />
         </a>
         <nav aria-label="Navegación principal">
           <a href="#info">El día</a>
@@ -393,7 +393,9 @@ export default function Home() {
       </section>
 
       <footer>
-        <div className="footer-mark">M<span>+</span>G</div>
+        <div className="footer-mark">
+          <img src="/logo-myg.png" alt="María y Guido" />
+        </div>
         <p>21 · 11 · 2026 — Darwin Tortugas</p>
         <a href="#inicio">Volver arriba ↑</a>
       </footer>
