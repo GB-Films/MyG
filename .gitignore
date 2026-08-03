@@ -44,3 +44,4 @@ next-env.d.ts
 .sites-firebase-test.*.log
 *.tsbuildinfo
 /github-pages-dist/
+/tmp/
