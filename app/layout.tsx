@@ -15,9 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     icons: {
-      icon: [{ url: "/favicon-rings-ai.png", type: "image/png", sizes: "512x512" }],
-      shortcut: "/favicon-rings-ai.png",
-      apple: "/favicon-rings-ai.png",
+      icon: [{ url: "/favicon-rings-staggered.png", type: "image/png", sizes: "1536x1536" }],
+      shortcut: "/favicon-rings-staggered.png",
+      apple: "/favicon-rings-staggered.png",
     },
     openGraph: {
       title,
