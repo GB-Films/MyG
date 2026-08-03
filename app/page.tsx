@@ -89,7 +89,7 @@ const money = new Intl.NumberFormat("es-AR", {
 const WEDDING_ALIAS = "regalosmariaguido";
 const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
 const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
-const EMAIL_SITE_URL = "https://gb-films.github.io/MyG";
+const EMAIL_SITE_URL = "https://casamientomyg.com.ar";
 const EMAIL_LOGO_URL = `${EMAIL_SITE_URL}/logo-myg-white.png`;
 const EMAIL_CALENDAR_ICON_URL = `${EMAIL_SITE_URL}/calendar.png`;
 const EMAIL_MAP_ICON_URL = `${EMAIL_SITE_URL}/map-pin.png`;
