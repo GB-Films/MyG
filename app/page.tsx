@@ -122,7 +122,10 @@ function weddingEmailTemplate({
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#ffffff">
         <tr>
           <td align="center" style="padding:28px 14px">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#111111;border:1px solid #333333">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background:#111111;border:1px solid #333333">
+              <tr>
+                <td style="padding:10px">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#111111;border:1px solid #f4f1eb">
               <tr>
                 <td align="center" style="padding:30px 28px 10px">
                   <img src="${EMAIL_LOGO_URL}" width="108" alt="M&amp;G" style="display:block;width:108px;max-width:108px;height:auto;border:0" />
@@ -149,6 +152,9 @@ function weddingEmailTemplate({
               <tr>
                 <td align="center" style="padding:20px 24px;border-top:1px solid #333333;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.5;letter-spacing:2.5px;text-transform:uppercase;color:#a9a9a9">
                   Mar&iacute;a &amp; Guido &nbsp;&middot;&nbsp; 21.11.2026
+                </td>
+              </tr>
+                  </table>
                 </td>
               </tr>
             </table>
