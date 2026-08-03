@@ -316,15 +316,17 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gift-modal { height: calc(100svh - 24px); max-height: none; overflow: hidden; }
   .modal-image { height: 100%; min-height: 0; }
   .gift-form, .modal-success { padding: 24px 6%; }
+  .gift-form { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; padding-block: 48px 30px; }
+  .gift-form > .eyebrow { margin: 0; }
   .gift-form > small { display: block; margin-bottom: 4px; }
   .gift-modal h2 { font-size: clamp(40px, 4.2vw, 58px); margin: 4px 0 2px; }
   .gift-description { font-size: 15px; line-height: 1.3; margin: 0; }
-  .gift-process { margin: 12px 0; padding: 12px 16px; }
+  .gift-process { margin: 0; padding: 12px 16px; }
   .gift-process > p { margin-bottom: 9px; }
   .gift-process ol { gap: 7px; }
   .gift-process li { font-size: 13px; gap: 9px; grid-template-columns: 22px 1fr; line-height: 1.26; }
   .gift-process li > span { font-size: 9px; height: 22px; width: 22px; }
-  .transfer-box { gap: 20px; margin: 12px 0; padding: 12px 0; }
+  .transfer-box { gap: 20px; margin: 0; padding: 12px 0; }
   .transfer-item { gap: 5px; }
   .transfer-box strong { font-size: 24px; }
   .transfer-box button { font-size: 18px; }
