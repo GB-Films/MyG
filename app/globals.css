@@ -154,6 +154,11 @@ a { color: inherit; }
 .facts a.map-button:hover { background: white; color: var(--ink); }
 .map-button svg { height: 17px; width: 17px; }
 .map-button span { margin-left: 3px; }
+.facts a.rsvp-reminder { align-items: center; background: var(--red); color: white; display: grid; gap: 16px; grid-column: auto; grid-template-columns: 1fr auto auto; margin-top: 24px; padding: 18px 22px; text-decoration: none; transform: rotate(-.7deg); transition: transform .2s ease; }
+.facts a.rsvp-reminder:hover { transform: rotate(0); }
+.rsvp-reminder span:first-child { font-size: 11px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+.rsvp-reminder strong { font-family: var(--font-display); font-size: 38px; font-weight: 400; letter-spacing: 0; line-height: .7; text-transform: none; }
+.rsvp-reminder span:last-child { font-size: 22px; }
 
 .timeline {
   background-color: var(--ink);
@@ -333,6 +338,9 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .intro { gap: 70px; min-height: auto; padding: 90px 22px; }
   .wedding-rings-image { margin-inline: auto; width: min(290px, 84%); }
   .facts article { grid-template-columns: 84px 1fr; }
+  .facts a.rsvp-reminder { gap: 10px; grid-template-columns: 1fr auto; padding: 18px; }
+  .rsvp-reminder strong { font-size: 34px; }
+  .rsvp-reminder span:last-child { display: none; }
   .timeline { padding: 85px 22px; }
   .timeline-heading { max-width: 62%; padding-top: 20px; position: static; }
   .timeline-rabbits { bottom: auto; justify-self: center; left: auto; margin: 34px auto 0; position: static; width: 200px; }

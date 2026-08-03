@@ -294,6 +294,11 @@ export default function Home() {
             </div>
             <p>Blanco reservado para la novia.<br />Verde para la familia del novio.<br />Azul para las damas de honor.</p>
           </article>
+          <a className="rsvp-reminder" href="#confirmar">
+            <span>Confirmá tu asistencia</span>
+            <strong>antes del 20/09</strong>
+            <span aria-hidden="true">↓</span>
+          </a>
         </div>
       </section>
 
@@ -314,7 +319,7 @@ export default function Home() {
 
       <section className="rsvp" id="confirmar">
         <div className="rsvp-intro">
-          <p className="eyebrow">RSVP · antes del 20/10</p>
+          <p className="eyebrow">RSVP · antes del 20/09</p>
           <h2>¿Venís?</h2>
           <img className="rsvp-car-image" src="/rsvp-car-hq.png" alt="Pareja recién casada alejándose en auto" />
         </div>
