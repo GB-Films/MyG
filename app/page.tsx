@@ -448,16 +448,6 @@ export default function Home() {
         <div className="hero-copy">
           <img className="hero-lockup" src="/hero-lockup.png" alt="M y G · María y Guido · 21.11.2026" />
         </div>
-        <div className="newspaper" aria-label="Reserva la fecha">
-          <div className="paper-top">
-            <span>Edición especial</span>
-            <span>Vol. 21</span>
-          </div>
-          <strong>Save the date</strong>
-          <div className="paper-rule" />
-          <p>Una noche. Una fiesta. Toda nuestra gente.</p>
-          <b>21—11—2026</b>
-        </div>
         <a className="scroll-cue" href="#info">
           Descubrí el plan <span>↓</span>
         </a>
