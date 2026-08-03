@@ -89,6 +89,7 @@ const money = new Intl.NumberFormat("es-AR", {
 const WEDDING_ALIAS = "regalosmariaguido";
 const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
 const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
+const EMAIL_LOGO_URL = "https://gb-films.github.io/MyG/logo-myg.png";
 
 type MailAudience = "guest" | "couple";
 type MailEventType = "rsvp" | "gift";
@@ -100,6 +101,61 @@ function escapeEmailHtml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function weddingEmailTemplate({
+  eyebrow,
+  title,
+  content,
+}: {
+  eyebrow: string;
+  title: string;
+  content: string;
+}) {
+  return `<!doctype html>
+  <html lang="es">
+    <body style="margin:0;padding:0;background:#0b0b0b;color:#ffffff">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#0b0b0b">
+        <tr>
+          <td align="center" style="padding:28px 14px">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#111111;border:1px solid #333333">
+              <tr><td style="height:7px;background:#f20d18;font-size:0;line-height:0">&nbsp;</td></tr>
+              <tr>
+                <td align="center" style="padding:30px 28px 10px">
+                  <div style="display:inline-block;background:#ffffff;padding:10px 14px;border-radius:2px">
+                    <img src="${EMAIL_LOGO_URL}" width="92" alt="M&amp;G" style="display:block;width:92px;max-width:92px;height:auto;border:0" />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:8px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.4;letter-spacing:3px;text-transform:uppercase;color:#f20d18;font-weight:700">
+                  ${eyebrow}
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:12px 32px 4px;font-family:Georgia,'Times New Roman',serif;font-size:38px;line-height:1.08;color:#ffffff;font-weight:400">
+                  ${title}
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:4px 32px 20px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1;color:#f20d18">&#9829;</td>
+              </tr>
+              <tr>
+                <td style="padding:0 38px 34px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.7;color:#f4f1eb">
+                  ${content}
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:20px 24px;border-top:1px solid #333333;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.5;letter-spacing:2.5px;text-transform:uppercase;color:#a9a9a9">
+                  Mar&iacute;a &amp; Guido &nbsp;&middot;&nbsp; 21.11.2026
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
 }
 
 async function queueEmail({
@@ -132,12 +188,13 @@ async function queueEmail({
 
 function weddingSummaryHtml() {
   return `
-    <div style="margin:24px 0;padding:20px;border-left:4px solid #e50914;background:#f7f5f0">
-      <strong style="display:block;margin-bottom:10px">María &amp; Guido · 21 de noviembre de 2026</strong>
+    <div style="margin:26px 0;padding:22px 22px 24px;border:1px solid #343434;border-left:5px solid #f20d18;background:#191919;color:#ffffff">
+      <div style="margin-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#f20d18;font-weight:700">Guard&aacute; esta fecha</div>
+      <strong style="display:block;margin-bottom:12px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#ffffff">21 de noviembre de 2026</strong>
       <div>Los esperamos a las 17:30.</div>
-      <div>Darwin Tortugas · Salón Laguna.</div>
-      <div>Elegantes. Blanco reservado para la novia, verde para la familia del novio y azul para las damas de honor.</div>
-      <a href="${WEDDING_MAP_URL}" style="display:inline-block;margin-top:14px;color:#e50914;font-weight:700">Abrir ubicación en Google Maps</a>
+      <div>Darwin Tortugas &middot; Sal&oacute;n Laguna.</div>
+      <div style="margin-top:10px;color:#d7d4cf">Elegantes. Blanco reservado para la novia, verde para la familia del novio y azul para las damas de honor.</div>
+      <a href="${WEDDING_MAP_URL}" style="display:inline-block;margin-top:18px;padding:12px 18px;background:#f20d18;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:700">Ver ubicaci&oacute;n en Google Maps &rarr;</a>
     </div>`;
 }
 
@@ -240,7 +297,11 @@ export default function Home() {
           to: COUPLE_EMAILS,
           subject: `Nuevo regalo: ${selectedGift.name}`,
           text: `${giverName} declaró el regalo ${selectedGift.name} por ${formattedAmount}. Dedicatoria: ${dedication}`,
-          html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111"><h1 style="font-family:Georgia,serif">¡Les hicieron un regalo!</h1><p><strong>${safeGiverName}</strong> declaró la transferencia de <strong>${safeGiftName}</strong> por <strong>${formattedAmount}</strong>.</p><p><strong>Dedicatoria:</strong> ${safeDedication}</p><p>Ya pueden verlo en el panel de administración.</p></div>`,
+          html: weddingEmailTemplate({
+            eyebrow: "Nuevo regalo",
+            title: "¡Les hicieron un regalo!",
+            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeGiverName}</strong> declar&oacute; la transferencia de <strong style="color:#ffffff">${safeGiftName}</strong> por <strong style="color:#f20d18">${formattedAmount}</strong>.</p><div style="margin:22px 0;padding:18px 20px;background:#191919;border-left:4px solid #f20d18;color:#ffffff"><div style="margin-bottom:7px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a9a9a9;font-weight:700">Dedicatoria</div>${safeDedication}</div><p style="margin:18px 0 0;color:#c8c5c0">Ya pueden verlo en el panel de administraci&oacute;n.</p>`,
+          }),
           eventId: record.id,
           eventType: "gift",
           audience: "couple",
@@ -249,7 +310,11 @@ export default function Home() {
           to: [giverEmail],
           subject: "Recibimos tu regalo para María y Guido",
           text: `Hola ${giverName}. Recibimos la confirmación de tu regalo: ${selectedGift.name}. ¡Muchas gracias por acompañarnos en esta nueva etapa!`,
-          html: `<div style="max-width:620px;margin:auto;font-family:Arial,sans-serif;line-height:1.65;color:#111"><div style="height:10px;background:#e50914"></div><div style="padding:32px;border:1px solid #ddd"><div style="font-size:42px;color:#e50914;text-align:center">♥</div><h1 style="font-family:Georgia,serif;text-align:center">¡Recibimos tu regalo!</h1><p>Hola <strong>${safeGiverName}</strong>. Quedó registrada tu transferencia para regalarnos <strong>${safeGiftName}</strong>.</p><p>${escapeEmailHtml(selectedGift.thankYou)}</p><p>Nos hace muy felices compartir esta etapa con vos.</p><p><strong>María &amp; Guido</strong></p></div></div>`,
+          html: weddingEmailTemplate({
+            eyebrow: "Regalo confirmado",
+            title: "¡Recibimos tu regalo!",
+            content: `<p style="margin:0 0 16px">Hola <strong style="color:#ffffff">${safeGiverName}</strong>.</p><p style="margin:0 0 18px">Qued&oacute; registrada tu transferencia para regalarnos <strong style="color:#ffffff">${safeGiftName}</strong>.</p><div style="margin:24px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.45;color:#ffffff">${escapeEmailHtml(selectedGift.thankYou)}</div><p style="margin:0;color:#c8c5c0">Nos hace muy felices compartir esta etapa con vos.</p>`,
+          }),
           eventId: record.id,
           eventType: "gift",
           audience: "guest",
@@ -311,7 +376,11 @@ export default function Home() {
           to: COUPLE_EMAILS,
           subject: `Confirmación de asistencia: ${fullName}`,
           text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones: ${dietary || "—"}. Transporte: ${transport}. Canción: ${song || "—"}. Mensaje: ${guestMessage || "—"}.`,
-          html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111"><h1 style="font-family:Georgia,serif">Nueva confirmación</h1><p><strong>${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><p><strong>Email:</strong> ${escapeEmailHtml(email)}<br><strong>Acompañantes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong>Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong>Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong>Canción:</strong> ${escapeEmailHtml(song || "—")}<br><strong>Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</p><p>La respuesta más reciente ya quedó guardada en el panel.</p></div>`,
+          html: weddingEmailTemplate({
+            eyebrow: "Nueva respuesta",
+            title: "Confirmación de asistencia",
+            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
+          }),
           eventId: recordId,
           eventType: "rsvp",
           audience: "couple",
@@ -322,7 +391,11 @@ export default function Home() {
           text: isAttending
             ? `Hola ${fullName}. Recibimos tu confirmación para el casamiento de María y Guido. Sábado 21 de noviembre de 2026 a las 17:30, Darwin Tortugas, Salón Laguna.`
             : `Hola ${fullName}. Recibimos tu respuesta. Lamentamos que no puedas acompañarnos y te agradecemos mucho por avisarnos. María y Guido.`,
-          html: `<div style="max-width:620px;margin:auto;font-family:Arial,sans-serif;line-height:1.65;color:#111"><div style="height:10px;background:#e50914"></div><div style="padding:32px;border:1px solid #ddd"><div style="font-size:42px;color:#e50914;text-align:center">♥</div><h1 style="font-family:Georgia,serif;text-align:center">${isAttending ? "¡Tu lugar está confirmado!" : "Recibimos tu respuesta"}</h1><p>Hola <strong>${safeFullName}</strong>.</p><p>${isAttending ? `Quedó registrada tu asistencia para ${guestCount} persona${guestCount === 1 ? "" : "s"}. Nos hace muy felices compartir este día con vos.` : "Lamentamos que no puedas acompañarnos, pero te agradecemos mucho por avisarnos."}</p>${isAttending ? weddingSummaryHtml() : ""}<p><strong>María &amp; Guido</strong></p></div></div>`,
+          html: weddingEmailTemplate({
+            eyebrow: isAttending ? "Asistencia confirmada" : "Respuesta recibida",
+            title: isAttending ? "¡Tu lugar está confirmado!" : "Recibimos tu respuesta",
+            content: `<p style="margin:0 0 16px">Hola <strong style="color:#ffffff">${safeFullName}</strong>.</p><p style="margin:0 0 20px">${isAttending ? `Qued&oacute; registrada tu asistencia para ${guestCount} persona${guestCount === 1 ? "" : "s"}. Nos hace muy felices compartir este d&iacute;a con vos.` : "Lamentamos que no puedas acompa&ntilde;arnos, pero te agradecemos mucho por avisarnos."}</p>${isAttending ? weddingSummaryHtml() : ""}`,
+          }),
           eventId: recordId,
           eventType: "rsvp",
           audience: "guest",
