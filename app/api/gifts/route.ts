@@ -1,4 +1,4 @@
-import { ensureWeddingSchema } from "../../../db";
+import { createFirestoreDocument } from "../../firebase-rest";
 
 export async function POST(request: Request) {
   const body = await request.json() as Record<string, unknown>;
@@ -13,14 +13,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
-  const DB = await ensureWeddingSchema();
-  await DB.prepare(`INSERT INTO gift_confirmations
-    (id, gift_id, gift_name, amount, giver_name, email, dedication, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'transfer_declared', ?)`)
-    .bind(
-      crypto.randomUUID(), giftId, giftName, amount, giverName, email, dedication, new Date().toISOString(),
-    )
-    .run();
+  const id = crypto.randomUUID();
+  await createFirestoreDocument("gift_confirmations", id, {
+    id,
+    gift_id: giftId,
+    gift_name: giftName,
+    amount,
+    giver_name: giverName,
+    email,
+    dedication,
+    status: "transfer_declared",
+    created_at: new Date().toISOString(),
+  });
 
   return Response.json({ ok: true }, { status: 201 });
 }

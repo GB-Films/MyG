@@ -1,4 +1,4 @@
-import { ensureWeddingSchema } from "../../../db";
+import { createFirestoreDocument } from "../../firebase-rest";
 
 export async function POST(request: Request) {
   const body = await request.json() as Record<string, unknown>;
@@ -17,24 +17,20 @@ export async function POST(request: Request) {
     return Response.json({ error: "Faltan nombres de asistentes" }, { status: 400 });
   }
 
-  const DB = await ensureWeddingSchema();
-  await DB.prepare(`INSERT INTO rsvps
-    (id, full_name, email, attendance, guest_count, guest_names, dietary, transport, song, message, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .bind(
-      crypto.randomUUID(),
-      fullName,
-      email,
-      attendance,
-      guestCount,
-      guestNames.join(" · ").slice(0, 600),
-      String(body.dietary ?? "").trim().slice(0, 300),
-      body.transport === "yes" ? "yes" : "no",
-      String(body.song ?? "").trim().slice(0, 180),
-      String(body.message ?? "").trim().slice(0, 500),
-      new Date().toISOString(),
-    )
-    .run();
+  const id = crypto.randomUUID();
+  await createFirestoreDocument("rsvps", id, {
+    id,
+    full_name: fullName,
+    email,
+    attendance,
+    guest_count: guestCount,
+    guest_names: guestNames.join(" · ").slice(0, 600),
+    dietary: String(body.dietary ?? "").trim().slice(0, 300),
+    transport: body.transport === "yes" ? "yes" : "no",
+    song: String(body.song ?? "").trim().slice(0, 180),
+    message: String(body.message ?? "").trim().slice(0, 500),
+    created_at: new Date().toISOString(),
+  });
 
   return Response.json({ ok: true }, { status: 201 });
 }
