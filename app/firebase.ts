@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDrt2hRutEbkHywC_0fMCn1lWaqNC1WLK8",
-  authDomain: "casamiento-mg.firebaseapp.com",
-  projectId: "casamiento-mg",
-  storageBucket: "casamiento-mg.firebasestorage.app",
-  messagingSenderId: "720903321979",
-  appId: "1:720903321979:web:a3229e7bc94bacc2df25de",
+  apiKey: "AIzaSyA2-9mZ2ZJ1uNsjBmjZZEmnKYdjhMQf9Qw",
+  authDomain: "casamientomyg-e3340.firebaseapp.com",
+  projectId: "casamientomyg-e3340",
+  storageBucket: "casamientomyg-e3340.firebasestorage.app",
+  messagingSenderId: "258323397237",
+  appId: "1:258323397237:web:8d70539334e1af8c39d63c",
 };
 
 const firebaseApp = getApps()[0] ?? initializeApp(firebaseConfig);

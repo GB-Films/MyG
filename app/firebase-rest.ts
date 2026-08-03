@@ -1,5 +1,5 @@
-const FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/casamiento-mg/databases/(default)/documents";
-const FIREBASE_API_KEY = "AIzaSyDrt2hRutEbkHywC_0fMCn1lWaqNC1WLK8";
+const FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/casamientomyg-e3340/databases/(default)/documents";
+const FIREBASE_API_KEY = "AIzaSyA2-9mZ2ZJ1uNsjBmjZZEmnKYdjhMQf9Qw";
 
 type FirestoreValue =
   | { stringValue: string }
