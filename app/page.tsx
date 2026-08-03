@@ -89,10 +89,11 @@ const money = new Intl.NumberFormat("es-AR", {
 const WEDDING_ALIAS = "regalosmariaguido";
 const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
 const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
-const EMAIL_LOGO_URL = "https://gb-films.github.io/MyG/logo-myg-white.png";
-const EMAIL_CALENDAR_ICON_URL = "https://gb-films.github.io/MyG/calendar.png";
-const EMAIL_MAP_ICON_URL = "https://gb-films.github.io/MyG/map-pin.png";
-const EMAIL_HANGER_ICON_URL = "https://gb-films.github.io/MyG/hanger.png";
+const EMAIL_SITE_URL = "https://gb-films.github.io/MyG";
+const EMAIL_LOGO_URL = `${EMAIL_SITE_URL}/logo-myg-white.png`;
+const EMAIL_CALENDAR_ICON_URL = `${EMAIL_SITE_URL}/calendar.png`;
+const EMAIL_MAP_ICON_URL = `${EMAIL_SITE_URL}/map-pin.png`;
+const EMAIL_HANGER_ICON_URL = `${EMAIL_SITE_URL}/hanger.png`;
 
 type MailAudience = "guest" | "couple";
 type MailEventType = "rsvp" | "gift";
@@ -122,7 +123,6 @@ function weddingEmailTemplate({
         <tr>
           <td align="center" style="padding:28px 14px">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#111111;border:1px solid #333333">
-              <tr><td style="height:7px;background:#f20d18;font-size:0;line-height:0">&nbsp;</td></tr>
               <tr>
                 <td align="center" style="padding:30px 28px 10px">
                   <img src="${EMAIL_LOGO_URL}" width="108" alt="M&amp;G" style="display:block;width:108px;max-width:108px;height:auto;border:0" />
@@ -300,6 +300,8 @@ export default function Home() {
     const safeGiverName = escapeEmailHtml(giverName);
     const safeGiftName = escapeEmailHtml(selectedGift.name);
     const safeDedication = escapeEmailHtml(dedication);
+    const safeGiftThankYou = escapeEmailHtml(selectedGift.thankYou);
+    const giftImageUrl = `${EMAIL_SITE_URL}${selectedGift.image}`;
     const formattedAmount = money.format(selectedGift.amount);
     try {
       await Promise.all([
@@ -310,7 +312,7 @@ export default function Home() {
           html: weddingEmailTemplate({
             eyebrow: "Nuevo regalo",
             title: "¡Les hicieron un regalo!",
-            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeGiverName}</strong> declar&oacute; la transferencia de <strong style="color:#ffffff">${safeGiftName}</strong> por <strong style="color:#f20d18">${formattedAmount}</strong>.</p><div style="margin:22px 0;padding:18px 20px;background:#191919;border-left:4px solid #f20d18;color:#ffffff"><div style="margin-bottom:7px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a9a9a9;font-weight:700">Dedicatoria</div>${safeDedication}</div><p style="margin:18px 0 0;color:#c8c5c0">Ya pueden verlo en el panel de administraci&oacute;n.</p>`,
+            content: `<img src="${giftImageUrl}" width="544" alt="${safeGiftName}" style="display:block;width:100%;max-width:544px;height:auto;margin:0 0 24px;border:1px solid #343434" /><p style="margin:0 0 18px"><strong style="color:#ffffff">${safeGiverName}</strong> declar&oacute; la transferencia de <strong style="color:#ffffff">${safeGiftName}</strong> por <strong style="color:#f20d18">${formattedAmount}</strong>.</p><div style="margin:22px 0;padding:18px 20px;background:#191919;border-left:4px solid #f20d18;color:#ffffff"><div style="margin-bottom:7px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a9a9a9;font-weight:700">Dedicatoria</div>${safeDedication}</div><p style="margin:18px 0 0;color:#c8c5c0">Ya pueden verlo en el panel de administraci&oacute;n.</p>`,
           }),
           eventId: record.id,
           eventType: "gift",
@@ -323,7 +325,7 @@ export default function Home() {
           html: weddingEmailTemplate({
             eyebrow: "Regalo confirmado",
             title: "¡Recibimos tu regalo!",
-            content: `<p style="margin:0 0 16px">Hola <strong style="color:#ffffff">${safeGiverName}</strong>.</p><p style="margin:0 0 18px">Qued&oacute; registrada tu transferencia para regalarnos <strong style="color:#ffffff">${safeGiftName}</strong>.</p><div style="margin:24px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.45;color:#ffffff">${escapeEmailHtml(selectedGift.thankYou)}</div><p style="margin:0;color:#c8c5c0">Nos hace muy felices compartir esta etapa con vos.</p>`,
+            content: `<img src="${giftImageUrl}" width="544" alt="${safeGiftName}" style="display:block;width:100%;max-width:544px;height:auto;margin:0 0 24px;border:1px solid #343434" /><p style="margin:0 0 16px">Hola <strong style="color:#ffffff">${safeGiverName}</strong>.</p><p style="margin:0 0 18px">Qued&oacute; registrada tu transferencia para regalarnos <strong style="color:#ffffff">${safeGiftName}</strong>.</p><div style="margin:24px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18"><div style="margin-bottom:8px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#f20d18;font-weight:700">Nuestro mensaje</div><div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.45;color:#ffffff">${safeGiftThankYou}</div></div><p style="margin:0;color:#c8c5c0">Nos hace muy felices compartir esta etapa con vos.</p>`,
           }),
           eventId: record.id,
           eventType: "gift",
