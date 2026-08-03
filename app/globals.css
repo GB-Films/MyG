@@ -244,7 +244,7 @@ a { color: inherit; }
 .rsvp-form input, .rsvp-form select { font-family: Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -.01em; min-height: 58px; }
 .rsvp-form input::placeholder { color: #5e5b55; opacity: 1; }
 .gift-fields label { color: #4f4d49; }
-.gift-fields input, .gift-fields textarea { border-bottom-color: #8f8c85; color: var(--ink); }
+.gift-fields input, .gift-fields textarea { border-bottom-color: #8f8c85; color: var(--ink); font-family: Georgia, serif; font-size: 19px; font-weight: 400; letter-spacing: -.01em; line-height: 1.4; }
 .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }
 .full { grid-column: 1 / -1; }
 .attendance { border: 0; display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(190px, 240px)); margin: 0; padding: 0; }
@@ -293,11 +293,12 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .gift-process li { align-items: start; color: #4f4d49; display: grid; font-family: Georgia, serif; font-size: 14px; gap: 11px; grid-template-columns: 24px 1fr; line-height: 1.38; }
 .gift-process li > span { align-items: center; background: var(--ink); border-radius: 50%; color: white; display: inline-flex; font-family: Arial, sans-serif; font-size: 10px; font-weight: 800; height: 24px; justify-content: center; width: 24px; }
 .gift-process strong { color: var(--ink); font-weight: 700; }
-.transfer-box { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin: 26px 0; padding: 20px 0; }
+.transfer-box { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); display: grid; gap: 28px; grid-template-columns: 1fr 1fr; margin: 26px 0; padding: 20px 0; }
+.transfer-item { align-items: start; display: flex; flex-direction: column; gap: 10px; }
 .transfer-box span { font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
-.transfer-box strong { font-family: Georgia, serif; font-size: 28px; font-weight: 400; text-align: right; }
-.transfer-box button { background: none; border: 0; cursor: pointer; font-size: 20px; font-weight: 800; grid-column: 2; padding: 0; text-align: right; }
-.transfer-box button i { color: var(--red); display: block; font-size: 9px; font-style: normal; letter-spacing: .12em; margin-top: 4px; text-transform: uppercase; }
+.transfer-box strong { font-family: Georgia, serif; font-size: 28px; font-weight: 400; text-align: left; }
+.transfer-box button { background: none; border: 0; cursor: pointer; font-size: 20px; font-weight: 800; padding: 0; text-align: left; }
+.transfer-box button i { color: var(--red); display: block; font-size: 9px; font-style: normal; letter-spacing: .12em; margin-top: 6px; text-transform: uppercase; }
 .gift-fields { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .gift-fields textarea { resize: vertical; }
 .gift-form > .submit-button { background: var(--ink); color: white; width: 100%; }
@@ -383,6 +384,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .rsvp h2 { font-size: clamp(94px, 30vw, 124px); }
   .rsvp-form, .gift-fields { grid-template-columns: 1fr; }
   .rsvp-form > *, .gift-fields > * { grid-column: 1; }
+  .transfer-box { gap: 20px; grid-template-columns: 1fr; }
   .attendance { grid-template-columns: 1fr; }
   .guest-roster { padding: 22px 16px; }
   .guest-roster-head, .guest-name-grid { grid-template-columns: 1fr; }

@@ -525,10 +525,14 @@ export default function Home() {
                   </ol>
                 </div>
                 <div className="transfer-box">
-                  <span>Importe a transferir</span>
-                  <strong>{money.format(selectedGift.amount)}</strong>
-                  <span>Alias</span>
-                  <button type="button" onClick={copyAlias}>{WEDDING_ALIAS} <i>{copied ? "Copiado ✓" : "Copiar"}</i></button>
+                  <div className="transfer-item">
+                    <span>Importe a transferir</span>
+                    <strong>{money.format(selectedGift.amount)}</strong>
+                  </div>
+                  <div className="transfer-item">
+                    <span>Alias</span>
+                    <button type="button" onClick={copyAlias}>{WEDDING_ALIAS} <i>{copied ? "Copiado ✓" : "Copiar"}</i></button>
+                  </div>
                 </div>
                 <div className="gift-fields">
                   <label>Tu nombre<input name="giverName" required autoComplete="name" /></label>
