@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Frown, MapPin, Navigation, PartyPopper } from "lucide-react";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { firestore } from "./firebase";
 
 function HangerIcon({ className = "" }: { className?: string }) {
   return (
@@ -106,10 +108,6 @@ export default function Home() {
   const visibleGifts = filteredGifts.slice((giftPage - 1) * GIFTS_PER_PAGE, giftPage * GIFTS_PER_PAGE);
 
   useEffect(() => {
-    setGiftPage(1);
-  }, [category]);
-
-  useEffect(() => {
     if (!selectedGift) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedGift(null);
@@ -140,20 +138,20 @@ export default function Home() {
     if (!selectedGift) return;
     setGiftStatus("sending");
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/gifts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        giftId: selectedGift.id,
-        giftName: selectedGift.name,
+    const record = doc(collection(firestore, "gift_confirmations"));
+    try {
+      await setDoc(record, {
+        id: record.id,
+        gift_id: selectedGift.id,
+        gift_name: selectedGift.name,
         amount: selectedGift.amount,
-        giverName: form.get("giverName"),
-        email: form.get("email"),
-        dedication: form.get("dedication"),
-      }),
-    });
-
-    if (!response.ok) {
+        giver_name: String(form.get("giverName") ?? "").trim().slice(0, 120),
+        email: String(form.get("email") ?? "").trim().toLowerCase().slice(0, 180),
+        dedication: String(form.get("dedication") ?? "").trim().slice(0, 600),
+        status: "transfer_declared",
+        created_at: new Date().toISOString(),
+      });
+    } catch {
       setGiftStatus("idle");
       return;
     }
@@ -169,23 +167,22 @@ export default function Home() {
       { length: Math.max(0, guestCount - 1) },
       (_, index) => form.get(`guestName-${index + 2}`),
     );
-    const response = await fetch("/api/rsvp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fullName: form.get("fullName"),
-        email: form.get("rsvpEmail"),
-        attendance: form.get("attendance"),
-        guestCount,
-        guestNames,
-        dietary: form.get("dietary"),
-        transport: form.get("transport"),
-        song: form.get("song"),
-        message: form.get("message"),
-      }),
-    });
-
-    if (!response.ok) {
+    const record = doc(collection(firestore, "rsvps"));
+    try {
+      await setDoc(record, {
+        id: record.id,
+        full_name: String(form.get("fullName") ?? "").trim().slice(0, 120),
+        email: String(form.get("rsvpEmail") ?? "").trim().toLowerCase().slice(0, 180),
+        attendance: String(form.get("attendance") ?? ""),
+        guest_count: guestCount,
+        guest_names: guestNames.map((name) => String(name ?? "").trim()).filter(Boolean).join(" · ").slice(0, 600),
+        dietary: String(form.get("dietary") ?? "").trim().slice(0, 300),
+        transport: form.get("transport") === "yes" ? "yes" : "no",
+        song: String(form.get("song") ?? "").trim().slice(0, 180),
+        message: String(form.get("message") ?? "").trim().slice(0, 500),
+        created_at: new Date().toISOString(),
+      });
+    } catch {
       setRsvpStatus("idle");
       return;
     }
@@ -402,7 +399,10 @@ export default function Home() {
             <button
               key={item}
               className={category === item ? "active" : ""}
-              onClick={() => setCategory(item)}
+              onClick={() => {
+                setCategory(item);
+                setGiftPage(1);
+              }}
               type="button"
             >
               {item}
