@@ -388,8 +388,11 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .gift-note { margin-inline: 4px; padding: 30px 24px 26px; transform: rotate(-.8deg); }
   .gift-note-opening { margin-left: -5px; }
   .gift-meta strong { min-height: auto; }
-  .intro h2, .gifts h2 { font-size: clamp(82px, 27vw, 112px); }
-  .timeline h2 { font-size: clamp(82px, 27vw, 112px); }
+  .intro h2 br, .timeline h2 br, .gifts h2 br { display: none; }
+  .intro h2 { font-size: clamp(44px, 14vw, 60px); line-height: .9; white-space: nowrap; }
+  .timeline-heading { max-width: 100%; }
+  .timeline h2 { font-size: clamp(27px, 8.4vw, 38px); line-height: .95; white-space: nowrap; }
+  .gifts h2 { font-size: clamp(34px, 10.5vw, 48px); line-height: .95; white-space: nowrap; }
   .timeline {
     background-image:
       linear-gradient(180deg, rgba(16, 16, 15, .4), rgba(16, 16, 15, .6) 42%, rgba(16, 16, 15, .72)),
@@ -403,7 +406,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   .timeline time { font-size: 21px; }
   .timeline li span { font-size: clamp(24px, 7.5vw, 32px); }
   .timeline em { font-size: 14px; }
-  .rsvp h2 { font-size: clamp(94px, 30vw, 124px); }
+  .rsvp h2 { font-size: clamp(56px, 18vw, 72px); line-height: .9; white-space: nowrap; }
   .rsvp-form, .gift-fields { grid-template-columns: 1fr; }
   .rsvp-form > *, .gift-fields > * { grid-column: 1; }
   .transfer-box { gap: 20px; grid-template-columns: 1fr; }

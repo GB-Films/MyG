@@ -503,7 +503,7 @@ export default function Home() {
         </div>
         <div className="intro-title">
           <p className="eyebrow">Información importante</p>
-          <h2>Nos vemos<br />acá.</h2>
+          <h2>Nos vemos<br />{" "}acá.</h2>
           <img className="wedding-rings-image" src="/wedding-rings-hq.png" alt="Dos alianzas entrelazadas" />
         </div>
         <div className="facts">
@@ -547,7 +547,7 @@ export default function Home() {
       <section className="timeline" id="itinerario" aria-labelledby="timeline-title">
         <div className="timeline-heading">
           <p className="eyebrow light">El itinerario</p>
-          <h2 id="timeline-title">Así se vivirá<br />esta noche.</h2>
+          <h2 id="timeline-title">Así se vivirá<br />{" "}esta noche.</h2>
         </div>
         <ol>
           <li><time>17:30</time><span>Recepción</span><em>Los esperamos previo a la ceremonia</em></li>
@@ -655,7 +655,7 @@ export default function Home() {
         <div className="section-head">
           <div>
             <p className="eyebrow light">Nuestra lista</p>
-            <h2>Regalá un<br />recuerdo.</h2>
+            <h2>Regalá un<br />{" "}recuerdo.</h2>
           </div>
           <aside className="gift-note">
             <span className="gift-note-heart" aria-hidden="true">♥</span>
