@@ -736,7 +736,7 @@ export default function Home() {
                 <div className="gift-process" aria-label="Cómo hacer este regalo">
                   <p>¿Cómo funciona?</p>
                   <ol>
-                    <li><span>1</span><div>Copiá el alias y transferí el monto indicado.</div></li>
+                    <li><span>1</span><div>Copiá el alias y transferí el monto indicado desde tu banco.</div></li>
                     <li><span>2</span><div>Una vez realizada la transferencia, {giftDeliveryCopy(selectedGift)}</div></li>
                     <li><span>3</span><div>Completá tus datos y confirmalo para que sepamos que fue de parte tuya.</div></li>
                   </ol>
