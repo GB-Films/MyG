@@ -1,6 +1,7 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA2-9mZ2ZJ1uNsjBmjZZEmnKYdjhMQf9Qw",
@@ -15,4 +16,5 @@ const firebaseApp = getApps()[0] ?? initializeApp(firebaseConfig);
 
 export const firebaseAuth = getAuth(firebaseApp);
 export const firestore = getFirestore(firebaseApp);
+export const firebaseFunctions = getFunctions(firebaseApp, "us-central1");
 export const FIREBASE_ADMIN_EMAIL = "guidoymaria@casamiento-mg.web.app";

@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { collection, deleteDoc, doc, onSnapshot, query } from "firebase/firestore";
-import { FIREBASE_ADMIN_EMAIL, firebaseAuth, firestore } from "../firebase";
+import { httpsCallable } from "firebase/functions";
+import { FIREBASE_ADMIN_EMAIL, firebaseAuth, firebaseFunctions, firestore } from "../firebase";
 import { DeleteRecordButton } from "./delete-record-button";
 
 type RsvpRow = {
@@ -27,6 +28,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
   const [giftRows, setGiftRows] = useState<GiftRow[]>([]);
+  const [sheetSyncing, setSheetSyncing] = useState(false);
+  const [sheetSyncMessage, setSheetSyncMessage] = useState("");
 
   useEffect(() => onAuthStateChanged(firebaseAuth, (nextUser) => {
     setUser(nextUser);
@@ -74,6 +77,21 @@ export default function AdminPage() {
     URL.revokeObjectURL(link.href);
   }
 
+  async function syncGoogleSheets() {
+    setSheetSyncing(true);
+    setSheetSyncMessage("");
+    try {
+      const sync = httpsCallable<undefined, { ok: boolean; confirmations: number; history: number; gifts: number }>(firebaseFunctions, "syncAllWeddingDataToGoogleSheets");
+      const result = await sync();
+      setSheetSyncMessage(`Sincronizado: ${result.data.confirmations} confirmaciones, ${result.data.history} versiones anteriores y ${result.data.gifts} regalos.`);
+    } catch (error) {
+      console.error("No se pudo sincronizar Google Sheets", error);
+      setSheetSyncMessage("No se pudo sincronizar. Revisá que la planilla esté compartida con la cuenta de servicio.");
+    } finally {
+      setSheetSyncing(false);
+    }
+  }
+
   if (!authReady) return <main style={{ minHeight: "100vh", background: "#10100f" }} />;
 
   if (!user) {
@@ -99,10 +117,13 @@ export default function AdminPage() {
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 20, flexWrap: "wrap" }}>
         <div><p style={{ letterSpacing: ".15em", textTransform: "uppercase", fontSize: 11 }}>María & Guido</p><h1 style={{ fontFamily: "Georgia, serif", fontSize: 58, fontWeight: 400, margin: 0 }}>Panel del casamiento</h1></div>
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <a href="https://docs.google.com/spreadsheets/d/1QuPLy0BrwkzNHFP-LJ-nlKmJ0eQORUEb5kJ55gel0ps/edit" target="_blank" rel="noreferrer" style={{ color: "inherit", fontWeight: 700 }}>Abrir Google Sheets</a>
+          <button type="button" onClick={syncGoogleSheets} disabled={sheetSyncing} style={{ background: "#f40009", border: 0, color: "white", cursor: sheetSyncing ? "wait" : "pointer", fontWeight: 800, padding: "11px 15px", textTransform: "uppercase" }}>{sheetSyncing ? "Sincronizando…" : "Sincronizar Sheets"}</button>
           <button type="button" onClick={downloadCsv} style={{ background: "transparent", border: 0, color: "inherit", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}>Descargar asistentes (CSV)</button>
           <button type="button" onClick={() => signOut(firebaseAuth)} style={{ background: "transparent", border: 0, color: "inherit", cursor: "pointer", textDecoration: "underline" }}>Cerrar sesión</button>
         </div>
       </header>
+      {sheetSyncMessage && <p role="status" style={{ color: sheetSyncMessage.startsWith("Sincronizado") ? "#76d69b" : "#ff6b72", fontWeight: 700 }}>{sheetSyncMessage}</p>}
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 16, margin: "42px 0" }}>
         {[["Personas confirmadas", attending], ["Regalos avisados", giftRows.length], ["Monto total", `$${totalGifts.toLocaleString("es-AR")}`]].map(([label, value]) => <article key={String(label)} style={{ background: "#191918", padding: 24, border: "1px solid #4a4a48", borderTop: "4px solid #f40009" }}><small style={{ color: "#c9c7c1" }}>{label}</small><strong style={{ display: "block", fontFamily: "Georgia,serif", fontSize: 48, marginTop: 10 }}>{value}</strong></article>)}
       </section>
