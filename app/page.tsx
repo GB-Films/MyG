@@ -381,7 +381,11 @@ export default function Home() {
 
     const safeFullName = escapeEmailHtml(fullName);
     const isAttending = attendance === "yes";
-    const attendanceLabel = isAttending ? `Sí, asiste con ${guestCount} persona${guestCount === 1 ? "" : "s"}` : "No puede asistir";
+    const attendanceLabel = isAttending
+      ? guestCount === 1
+        ? "Sí, asiste"
+        : `Sí, asiste con ${guestCount} personas en total`
+      : "No puede asistir";
     try {
       await Promise.all([
         queueEmail({
