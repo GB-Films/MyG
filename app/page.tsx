@@ -90,6 +90,9 @@ const WEDDING_ALIAS = "regalosmariaguido";
 const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
 const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
 const EMAIL_LOGO_URL = "https://gb-films.github.io/MyG/logo-myg-white.png";
+const EMAIL_CALENDAR_ICON_URL = "https://gb-films.github.io/MyG/calendar.png";
+const EMAIL_MAP_ICON_URL = "https://gb-films.github.io/MyG/map-pin.png";
+const EMAIL_HANGER_ICON_URL = "https://gb-films.github.io/MyG/hanger.png";
 
 type MailAudience = "guest" | "couple";
 type MailEventType = "rsvp" | "gift";
@@ -188,11 +191,20 @@ function weddingSummaryHtml() {
   return `
     <div style="margin:26px 0;padding:22px 22px 24px;border:1px solid #343434;border-left:5px solid #f20d18;background:#191919;color:#ffffff">
       <div style="margin-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#f20d18;font-weight:700">Guard&aacute; esta fecha</div>
-      <strong style="display:block;margin-bottom:12px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#ffffff">21 de noviembre de 2026</strong>
-      <div>Los esperamos a las 17:30.</div>
-      <div>Darwin Tortugas &middot; Sal&oacute;n Laguna.</div>
-      <div style="margin-top:10px;color:#d7d4cf">Elegantes. Blanco reservado para la novia, verde para la familia del novio y azul para las damas de honor.</div>
-      <a href="${WEDDING_MAP_URL}" style="display:inline-block;margin-top:18px;padding:12px 18px;background:#f20d18;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:700">Ver ubicaci&oacute;n en Google Maps &rarr;</a>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;color:#ffffff">
+        <tr>
+          <td width="38" valign="top" style="width:38px;padding:2px 12px 18px 0"><img src="${EMAIL_CALENDAR_ICON_URL}" width="27" height="27" alt="" style="display:block;width:27px;height:27px;border:0" /></td>
+          <td valign="top" style="padding:0 0 18px"><strong style="display:block;margin-bottom:6px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#ffffff">21 de noviembre de 2026</strong><div style="color:#d7d4cf">S&aacute;bado &middot; Los esperamos a las 17:30.</div></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top" style="width:38px;padding:20px 12px 18px 0;border-top:1px solid #343434"><img src="${EMAIL_MAP_ICON_URL}" width="27" height="27" alt="" style="display:block;width:27px;height:27px;border:0" /></td>
+          <td valign="top" style="padding:18px 0 20px;border-top:1px solid #343434"><strong style="display:block;margin-bottom:6px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#ffffff">Darwin Tortugas</strong><div style="color:#d7d4cf">Sal&oacute;n Laguna &middot; Fiesta y ceremonia en el mismo lugar.</div><a href="${WEDDING_MAP_URL}" style="display:inline-block;margin-top:15px;padding:11px 16px;background:#f20d18;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700">Ver ubicaci&oacute;n en Google Maps &rarr;</a></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top" style="width:38px;padding:20px 12px 0 0;border-top:1px solid #343434"><img src="${EMAIL_HANGER_ICON_URL}" width="27" height="27" alt="" style="display:block;width:27px;height:27px;border:0" /></td>
+          <td valign="top" style="padding:18px 0 0;border-top:1px solid #343434"><strong style="display:block;margin-bottom:6px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#ffffff">Elegantes</strong><div style="color:#d7d4cf">Blanco reservado para la novia.<br />Verde para la familia del novio.<br />Azul para las damas de honor.</div></td>
+        </tr>
+      </table>
     </div>`;
 }
 
