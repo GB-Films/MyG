@@ -1,0 +1,86 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid == 'VgGQEYLf2qdcQkMm389U5RDygED3';
+    }
+
+    function validRsvp(documentId) {
+      return request.resource.data.keys().hasOnly([
+          'id', 'full_name', 'email', 'attendance', 'guest_count',
+          'guest_names', 'dietary', 'transport', 'song', 'message', 'created_at'
+        ])
+        && request.resource.data.id == documentId
+        && request.resource.data.id is string
+        && request.resource.data.id.size() <= 128
+        && request.resource.data.full_name is string
+        && request.resource.data.full_name.size() > 0
+        && request.resource.data.full_name.size() <= 120
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 180
+        && request.resource.data.attendance in ['yes', 'no']
+        && request.resource.data.guest_count is int
+        && request.resource.data.guest_count >= 1
+        && request.resource.data.guest_count <= 10
+        && request.resource.data.guest_names is string
+        && request.resource.data.guest_names.size() <= 600
+        && request.resource.data.dietary is string
+        && request.resource.data.dietary.size() <= 300
+        && request.resource.data.transport in ['yes', 'no']
+        && request.resource.data.song is string
+        && request.resource.data.song.size() <= 180
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 500
+        && request.resource.data.created_at is string
+        && request.resource.data.created_at.size() <= 40;
+    }
+
+    match /rsvps/{documentId} {
+      allow create: if (request.auth == null || isAdmin()) && validRsvp(documentId);
+      allow update: if request.auth == null
+        && validRsvp(documentId)
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.id == resource.data.id;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /gift_confirmations/{documentId} {
+      allow create: if (request.auth == null || isAdmin())
+        && request.resource.data.keys().hasOnly([
+          'id', 'gift_id', 'gift_name', 'amount', 'giver_name',
+          'email', 'dedication', 'status', 'created_at'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.id.size() <= 128
+        && request.resource.data.gift_id is string
+        && request.resource.data.gift_id.size() > 0
+        && request.resource.data.gift_id.size() <= 100
+        && request.resource.data.gift_name is string
+        && request.resource.data.gift_name.size() > 0
+        && request.resource.data.gift_name.size() <= 180
+        && request.resource.data.amount is int
+        && request.resource.data.amount > 0
+        && request.resource.data.amount <= 100000000
+        && request.resource.data.giver_name is string
+        && request.resource.data.giver_name.size() > 0
+        && request.resource.data.giver_name.size() <= 120
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 180
+        && request.resource.data.dedication is string
+        && request.resource.data.dedication.size() > 0
+        && request.resource.data.dedication.size() <= 600
+        && request.resource.data.status == 'transfer_declared'
+        && request.resource.data.created_at is string
+        && request.resource.data.created_at.size() <= 40;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

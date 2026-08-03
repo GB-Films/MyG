@@ -105,6 +105,7 @@ export default function Home() {
   const [giftPage, setGiftPage] = useState(1);
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [giftStatus, setGiftStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [giftError, setGiftError] = useState("");
   const [rsvpStatus, setRsvpStatus] = useState<"idle" | "sending" | "done">("idle");
   const [rsvpError, setRsvpError] = useState("");
   const [rsvpAttendance, setRsvpAttendance] = useState<"" | "yes" | "no">("");
@@ -151,6 +152,7 @@ export default function Home() {
     event.preventDefault();
     if (!selectedGift) return;
     setGiftStatus("sending");
+    setGiftError("");
     const form = new FormData(event.currentTarget);
     const record = doc(collection(firestore, "gift_confirmations"));
     try {
@@ -165,8 +167,10 @@ export default function Home() {
         status: "transfer_declared",
         created_at: new Date().toISOString(),
       });
-    } catch {
+    } catch (error) {
+      console.error("No se pudo confirmar el regalo", error);
       setGiftStatus("idle");
+      setGiftError("No pudimos confirmar el regalo. Revisá tu conexión e intentá nuevamente.");
       return;
     }
     setGiftStatus("done");
@@ -443,7 +447,7 @@ export default function Home() {
             const giftNumber = String((giftPage - 1) * GIFTS_PER_PAGE + index + 1).padStart(2, "0");
             return (
               <article className="gift-card" key={gift.id}>
-                <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); }}>
+                <button type="button" onClick={() => { setSelectedGift(gift); setGiftStatus("idle"); setGiftError(""); }}>
                   <span className="gift-image-wrap">
                     <img src={gift.image} alt="" />
                     <span className="gift-number">{giftNumber}</span>
@@ -542,6 +546,7 @@ export default function Home() {
                 <button className="submit-button" disabled={giftStatus === "sending"}>
                   {giftStatus === "sending" ? "Confirmando…" : "Ya transferí este regalo"}
                 </button>
+                {giftError && <p className="gift-error" role="alert">{giftError}</p>}
               </form>
             )}
           </section>

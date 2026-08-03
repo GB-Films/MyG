@@ -303,6 +303,7 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .gift-fields textarea { resize: vertical; }
 .gift-form > .submit-button { background: var(--ink); color: white; width: 100%; }
 .gift-form > .submit-button:hover { background: #30302e; }
+.gift-error { border-left: 4px solid var(--red); color: #4b4741; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.45; margin: 16px 0 0; padding: 9px 12px; }
 .modal-success { text-align: center; }
 .success-heart { animation: heart-pop .65s cubic-bezier(.2, 1.35, .35, 1), heart-beat 1.8s ease-in-out .75s infinite; color: var(--red); display: inline-block; filter: drop-shadow(0 8px 14px rgba(244, 0, 9, .2)); font-size: 74px; line-height: 1; transform-origin: center; }
 .modal-success h2 { margin-top: 18px; }
