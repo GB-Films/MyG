@@ -298,8 +298,9 @@ export default function Home() {
         </div>
 
         {rsvpStatus === "done" ? (
-          <div className="success-card" role="status">
-            <span>✓</span>
+          <div className="success-card rsvp-success" role="status">
+            <span className="success-heart rsvp-success-heart" aria-hidden="true">♥</span>
+            <p className="eyebrow">Respuesta confirmada</p>
             <h3>¡Recibimos tu respuesta!</h3>
             <p>Gracias por confirmar. Nos hace muy felices compartir este día con vos.</p>
             <button type="button" onClick={() => { setRsvpStatus("idle"); setRsvpAttendance(""); setRsvpGuestCount(1); }}>Enviar otra respuesta</button>

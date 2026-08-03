@@ -262,8 +262,10 @@ a { color: inherit; }
 .submit-button:hover { background: #30302e; }
 .submit-button:disabled { cursor: wait; opacity: .6; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
-.success-card > span { align-items: center; background: var(--red); border-radius: 50%; color: white; display: inline-flex; font-size: 30px; height: 64px; justify-content: center; width: 64px; }
-.success-card h3 { font-family: Georgia, serif; font-size: 40px; font-weight: 400; margin: 24px 0 12px; }
+.rsvp-success { animation: confirmation-reveal .55s cubic-bezier(.22, 1, .36, 1) both; }
+.success-card > .rsvp-success-heart { background: none; border-radius: 0; color: var(--red); display: inline-block; font-size: 74px; height: auto; width: auto; }
+.rsvp-success .eyebrow { color: var(--ink); margin: 14px 0 0; }
+.success-card h3 { font-family: Georgia, serif; font-size: 40px; font-weight: 400; margin: 22px 0 12px; }
 .success-card p { color: #66625c; line-height: 1.6; }
 .success-card button, .modal-success button { background: none; border: 0; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .1em; margin-top: 20px; text-decoration: underline; text-transform: uppercase; }
 
@@ -305,6 +307,11 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
   0%, 34%, 100% { transform: scale(1); }
   12% { transform: scale(1.12); }
   22% { transform: scale(.97); }
+}
+
+@keyframes confirmation-reveal {
+  0% { opacity: 0; transform: translateY(18px) scale(.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 900px) {
@@ -375,5 +382,5 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
-  .success-heart { animation: none; }
+  .success-heart, .rsvp-success { animation: none; }
 }
