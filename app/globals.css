@@ -160,6 +160,7 @@ a { color: inherit; }
   position: relative;
 }
 .timeline-heading { align-self: start; padding-top: 28px; position: static; }
+.timeline-heading .eyebrow { font-size: 12px; }
 .timeline h2 { color: white; font-size: clamp(64px, 7vw, 104px); }
 .timeline-rabbits {
   bottom: 26px;
