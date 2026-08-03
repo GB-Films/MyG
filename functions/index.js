@@ -32,7 +32,9 @@ exports.sendWeddingEmail = onDocumentCreated(
       secure: true,
       auth: {
         user: sender,
-        pass: smtpPassword.value(),
+        // Google muestra las claves de aplicación separadas en bloques.
+        // Gmail espera los 16 caracteres sin espacios ni saltos de línea.
+        pass: smtpPassword.value().replace(/\s+/g, ""),
       },
     });
 
