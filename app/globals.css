@@ -269,8 +269,7 @@ a { color: inherit; }
 .rsvp-error { background: #fff; border-left: 4px solid var(--red); color: var(--ink); font-size: 14px; line-height: 1.5; margin: -18px 0 0; padding: 14px 18px; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
 .rsvp-success { animation: confirmation-reveal .55s cubic-bezier(.22, 1, .36, 1) both; }
-.success-card > .rsvp-success-heart { background: none; border-radius: 0; color: var(--red); display: inline-block; font-size: 74px; height: auto; width: auto; }
-.rsvp-success .eyebrow { color: var(--ink); margin: 14px 0 0; }
+.success-card > .rsvp-success-heart { background: none; border-radius: 0; color: var(--red); display: inline-block; font-size: 74px; height: auto; margin-top: 18px; width: auto; }
 .success-card h3 { font-family: Georgia, serif; font-size: 40px; font-weight: 400; margin: 22px 0 12px; }
 .success-card p { color: #66625c; line-height: 1.6; }
 .success-card button, .modal-success button { background: none; border: 0; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .1em; margin-top: 20px; text-decoration: underline; text-transform: uppercase; }
