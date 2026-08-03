@@ -23,9 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/og.png", width: 1739, height: 909, alt: "María y Guido — 21 de noviembre de 2026" }],
+      images: [{ url: "/og-whatsapp.png", width: 2048, height: 1152, alt: "María y Guido — 21 de noviembre de 2026" }],
     },
-    twitter: { card: "summary_large_image", title, description, images: ["/og.png"] },
+    twitter: { card: "summary_large_image", title, description, images: ["/og-whatsapp.png"] },
   };
 }
 
