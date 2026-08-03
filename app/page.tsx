@@ -87,6 +87,18 @@ const money = new Intl.NumberFormat("es-AR", {
 
 const WEDDING_ALIAS = "regalosmariaguido";
 
+function giftDeliveryCopy(gift: Gift) {
+  if (gift.category === "Nuestro hogar") {
+    return <>vamos a recibir <strong>{gift.name}</strong> en nuestra casa.</>;
+  }
+
+  if (gift.category === "Luna de miel") {
+    return <>vamos a sumar <strong>{gift.name}</strong> a nuestra luna de miel.</>;
+  }
+
+  return <>vamos a poder disfrutar de <strong>{gift.name}</strong>.</>;
+}
+
 export default function Home() {
   const [category, setCategory] = useState("Todos");
   const [giftPage, setGiftPage] = useState(1);
@@ -489,6 +501,14 @@ export default function Home() {
                 <p className="eyebrow">{selectedGift.category}</p>
                 <h2 id="gift-modal-title">{selectedGift.name}</h2>
                 <p className="gift-description">{selectedGift.note}</p>
+                <div className="gift-process" aria-label="Cómo hacer este regalo">
+                  <p>¿Cómo funciona?</p>
+                  <ol>
+                    <li><span>1</span><div>Copiá el alias y transferí el monto indicado.</div></li>
+                    <li><span>2</span><div>Una vez realizada la transferencia, {giftDeliveryCopy(selectedGift)}</div></li>
+                    <li><span>3</span><div>Completá tus datos y confirmalo para que sepamos que fue de parte tuya.</div></li>
+                  </ol>
+                </div>
                 <div className="transfer-box">
                   <span>Importe a transferir</span>
                   <strong>{money.format(selectedGift.amount)}</strong>
@@ -500,7 +520,6 @@ export default function Home() {
                   <label>Tu email<input name="email" type="email" required autoComplete="email" /></label>
                   <label className="full">Dedicatoria<textarea name="dedication" rows={3} required placeholder="Dejanos unas palabras…" /></label>
                 </div>
-                <p className="transfer-note">Después de realizar la transferencia, confirmala acá para que podamos identificar tu regalo y agradecerte.</p>
                 <button className="submit-button" disabled={giftStatus === "sending"}>
                   {giftStatus === "sending" ? "Confirmando…" : "Ya transferí este regalo"}
                 </button>

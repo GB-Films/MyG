@@ -282,6 +282,12 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .gift-form, .modal-success { align-self: center; padding: 60px 7%; }
 .gift-modal h2 { font-size: clamp(46px, 5vw, 72px); line-height: .92; }
 .gift-description { color: #68645d; font-family: Georgia, serif; font-size: 17px; font-style: italic; line-height: 1.5; }
+.gift-process { background: #fff; border-left: 4px solid var(--red); margin: 22px 0; padding: 18px 20px 16px; }
+.gift-process > p { font-size: 10px; font-weight: 900; letter-spacing: .13em; margin: 0 0 13px; text-transform: uppercase; }
+.gift-process ol { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.gift-process li { align-items: start; color: #4f4d49; display: grid; font-family: Georgia, serif; font-size: 14px; gap: 11px; grid-template-columns: 24px 1fr; line-height: 1.38; }
+.gift-process li > span { align-items: center; background: var(--ink); border-radius: 50%; color: white; display: inline-flex; font-family: Arial, sans-serif; font-size: 10px; font-weight: 800; height: 24px; justify-content: center; width: 24px; }
+.gift-process strong { color: var(--ink); font-weight: 700; }
 .transfer-box { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin: 26px 0; padding: 20px 0; }
 .transfer-box span { font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .transfer-box strong { font-family: Georgia, serif; font-size: 28px; font-weight: 400; text-align: right; }
@@ -289,7 +295,6 @@ footer p, footer a { font-size: 10px; font-weight: 800; letter-spacing: .14em; t
 .transfer-box button i { color: var(--red); display: block; font-size: 9px; font-style: normal; letter-spacing: .12em; margin-top: 4px; text-transform: uppercase; }
 .gift-fields { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .gift-fields textarea { resize: vertical; }
-.transfer-note { color: #75716a; font-size: 12px; line-height: 1.5; }
 .gift-form > .submit-button { background: var(--ink); color: white; width: 100%; }
 .gift-form > .submit-button:hover { background: #30302e; }
 .modal-success { text-align: center; }
