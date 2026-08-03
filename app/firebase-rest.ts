@@ -34,3 +34,22 @@ export async function createFirestoreDocument(
     throw new Error("No se pudo guardar el registro");
   }
 }
+
+export async function upsertFirestoreDocument(
+  collectionName: "rsvps" | "gift_confirmations",
+  id: string,
+  values: Record<string, string | number>,
+) {
+  const url = `${FIRESTORE_BASE}/${collectionName}/${encodeURIComponent(id)}?key=${FIREBASE_API_KEY}`;
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: encodeFields(values) }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Firestore upsert failed", response.status, detail);
+    throw new Error("No se pudo guardar el registro");
+  }
+}

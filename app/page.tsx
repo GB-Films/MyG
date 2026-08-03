@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Frown, MapPin, Navigation, PartyPopper } from "lucide-react";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { firestore } from "./firebase";
+import { normalizeRsvpEmail, rsvpDocumentId } from "./rsvp-utils";
 
 function HangerIcon({ className = "" }: { className?: string }) {
   return (
@@ -105,6 +106,7 @@ export default function Home() {
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [giftStatus, setGiftStatus] = useState<"idle" | "sending" | "done">("idle");
   const [rsvpStatus, setRsvpStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [rsvpError, setRsvpError] = useState("");
   const [rsvpAttendance, setRsvpAttendance] = useState<"" | "yes" | "no">("");
   const [rsvpGuestCount, setRsvpGuestCount] = useState(1);
   const [copied, setCopied] = useState(false);
@@ -173,18 +175,21 @@ export default function Home() {
   async function submitRsvp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setRsvpStatus("sending");
+    setRsvpError("");
     const form = new FormData(event.currentTarget);
     const guestCount = Number(form.get("guestCount") || 1);
+    const email = normalizeRsvpEmail(form.get("rsvpEmail"));
     const guestNames = Array.from(
       { length: Math.max(0, guestCount - 1) },
       (_, index) => form.get(`guestName-${index + 2}`),
     );
-    const record = doc(collection(firestore, "rsvps"));
+    const recordId = await rsvpDocumentId(email);
+    const record = doc(firestore, "rsvps", recordId);
     try {
       await setDoc(record, {
-        id: record.id,
+        id: recordId,
         full_name: String(form.get("fullName") ?? "").trim().slice(0, 120),
-        email: String(form.get("rsvpEmail") ?? "").trim().toLowerCase().slice(0, 180),
+        email,
         attendance: String(form.get("attendance") ?? ""),
         guest_count: guestCount,
         guest_names: guestNames.map((name) => String(name ?? "").trim()).filter(Boolean).join(" · ").slice(0, 600),
@@ -194,11 +199,16 @@ export default function Home() {
         message: String(form.get("message") ?? "").trim().slice(0, 500),
         created_at: new Date().toISOString(),
       });
-    } catch {
+    } catch (error) {
+      console.error("No se pudo guardar la confirmación", error);
       setRsvpStatus("idle");
+      setRsvpError("No pudimos guardar tu confirmación. Revisá tu conexión e intentá nuevamente.");
       return;
     }
     setRsvpStatus("done");
+    window.setTimeout(() => {
+      document.querySelector(".rsvp-success")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
   }
 
   return (
@@ -386,6 +396,7 @@ export default function Home() {
             <button className="submit-button full" disabled={rsvpStatus === "sending"}>
               {rsvpStatus === "sending" ? "Enviando…" : "Confirmar asistencia"}
             </button>
+            {rsvpError && <p className="rsvp-error full" role="alert">{rsvpError}</p>}
           </form>
         )}
       </section>

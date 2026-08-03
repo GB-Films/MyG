@@ -1,9 +1,10 @@
-import { createFirestoreDocument } from "../../firebase-rest";
+import { upsertFirestoreDocument } from "../../firebase-rest";
+import { normalizeRsvpEmail, rsvpDocumentId } from "../../rsvp-utils";
 
 export async function POST(request: Request) {
   const body = await request.json() as Record<string, unknown>;
   const fullName = String(body.fullName ?? "").trim().slice(0, 120);
-  const email = String(body.email ?? "").trim().toLowerCase().slice(0, 180);
+  const email = normalizeRsvpEmail(String(body.email ?? ""));
   const attendance = body.attendance === "yes" ? "yes" : body.attendance === "no" ? "no" : "";
   const guestCount = Math.max(1, Math.min(10, Number(body.guestCount) || 1));
   const guestNames = (Array.isArray(body.guestNames) ? body.guestNames : [])
@@ -17,8 +18,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Faltan nombres de asistentes" }, { status: 400 });
   }
 
-  const id = crypto.randomUUID();
-  await createFirestoreDocument("rsvps", id, {
+  const id = await rsvpDocumentId(email);
+  await upsertFirestoreDocument("rsvps", id, {
     id,
     full_name: fullName,
     email,

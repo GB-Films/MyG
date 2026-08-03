@@ -261,6 +261,7 @@ a { color: inherit; }
 .rsvp-form .submit-button { font-size: 13px; min-height: 64px; padding: 20px 24px; }
 .submit-button:hover { background: #30302e; }
 .submit-button:disabled { cursor: wait; opacity: .6; }
+.rsvp-error { background: #fff; border-left: 4px solid var(--red); color: var(--ink); font-size: 14px; line-height: 1.5; margin: -18px 0 0; padding: 14px 18px; }
 .success-card { align-self: center; background: white; border: 1px solid var(--line); padding: 60px; text-align: center; }
 .rsvp-success { animation: confirmation-reveal .55s cubic-bezier(.22, 1, .36, 1) both; }
 .success-card > .rsvp-success-heart { background: none; border-radius: 0; color: var(--red); display: inline-block; font-size: 74px; height: auto; width: auto; }
