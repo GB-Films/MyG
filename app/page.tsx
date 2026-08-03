@@ -529,7 +529,7 @@ export default function Home() {
             </a>
           </article>
           <article>
-            <span>DRESSCODE</span>
+            <span>03 / DRESSCODE</span>
             <div className="fact-heading">
               <HangerIcon className="hanger-icon" />
               <h3>Elegantes</h3>
