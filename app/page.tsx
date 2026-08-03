@@ -77,6 +77,32 @@ const gifts: Gift[] = [
   gift("regalo-002", "Cargar la sube", 100000, "Experiencias", "/gifts/sube_v01.png", "Listo, ahora volvemos de la fiesta en bondi, nos salvaste. ¡Gracias!"),
 ];
 
+const customGiftDeliveryCopy: Partial<Record<string, string>> = {
+  "regalo-019": "nos va a llegar un “Paquete de Lays” a nuestra casa.",
+  "regalo-021": "vamos a ir directo al parque a disfrutar de un “Picnic en la plaza”.",
+  "regalo-013": "vamos a recibir las “Latas de Atun La Campagnola x3” en nuestra casa.",
+  "regalo-006": "nos llegan los “2 Combos Doble Cuarto de Libra” a nuestra casa.",
+  "regalo-018": "nos vamos directo al cine a disfrutar de “Noche de Cine Premium”.",
+  "regalo-026": "la NASA inicia la misión para ir a “Pisar la Luna”.",
+  "regalo-014": "vamos a “Llenar el tanque” y salir a dar una vuelta con el auto.",
+  "regalo-002": "vamos a poder “Cargar la sube” y viajar por un año entero.",
+  "regalo-010": "vamos a recibir el “FotoLibro Luna de Miel” en nuestra casa.",
+  "regalo-028": "vamos a recibir toda la carne en casa para hacer un terrible “Asado para toda la Flia”.",
+  "regalo-015": "se va a “Llenar la heladera” automaticamente en nuestra casa.",
+  "regalo-025": "vamos a ir en un submarino a “Visitar el Titanic”.",
+  "regalo-024": "vamos a meter “Noche de Truco con Paredes y De Paul” en nuestra casa.",
+  "regalo-004": "vamos a recibir un “Camion de Coca Cola” en nuestra casa.",
+  "regalo-008": "nos llegan a casa las “Entradas para la F1” y de ahí directo a ver a Franco.",
+  "regalo-027": "nos vamos directo a hacer un “Tour de Vinos en Mendoza”.",
+  "regalo-023": "vamos a poder viajar en “Globo Aerostático por Turquía” por primera vez.",
+  "regalo-022": "armamos las valijas y nos vamos directo al “Safari por Africa”.",
+  "regalo-012": "vamos al Congo a la “Excursion con Gorilas”.",
+  "regalo-030": "vamos a sumar un “Viaje en primera clase” a nuestra luna de miel.",
+  "regalo-003": "vamos a recibir una “Cámara Profesional” por Mercado Libre en nuestra casa.",
+  "regalo-009": "vamos a recibir una “Maquina de Arcade” por Mercado Libre en nuestra casa.",
+  "regalo-029": "nos vamos con la “Van a recorrer el país” un mes entero.",
+};
+
 const categories = ["Todos", "Luna de miel", "Nuestro hogar", "Experiencias"];
 const GIFTS_PER_PAGE = 10;
 
@@ -215,6 +241,9 @@ function weddingSummaryHtml() {
 }
 
 function giftDeliveryCopy(gift: Gift) {
+  const customCopy = customGiftDeliveryCopy[gift.id];
+  if (customCopy) return customCopy;
+
   if (gift.category === "Nuestro hogar") {
     return <>vamos a recibir <strong>{gift.name}</strong> en nuestra casa.</>;
   }
