@@ -87,6 +87,59 @@ const money = new Intl.NumberFormat("es-AR", {
 });
 
 const WEDDING_ALIAS = "regalosmariaguido";
+const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
+const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
+
+type MailAudience = "guest" | "couple";
+type MailEventType = "rsvp" | "gift";
+
+function escapeEmailHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function queueEmail({
+  to,
+  subject,
+  text,
+  html,
+  eventId,
+  eventType,
+  audience,
+}: {
+  to: string[];
+  subject: string;
+  text: string;
+  html: string;
+  eventId: string;
+  eventType: MailEventType;
+  audience: MailAudience;
+}) {
+  const emailDocument = doc(collection(firestore, "mail"));
+  await setDoc(emailDocument, {
+    to,
+    message: { subject, text, html },
+    event_id: eventId,
+    event_type: eventType,
+    audience,
+    created_at: new Date().toISOString(),
+  });
+}
+
+function weddingSummaryHtml() {
+  return `
+    <div style="margin:24px 0;padding:20px;border-left:4px solid #e50914;background:#f7f5f0">
+      <strong style="display:block;margin-bottom:10px">María &amp; Guido · 21 de noviembre de 2026</strong>
+      <div>Los esperamos a las 17:30.</div>
+      <div>Darwin Tortugas · Salón Laguna.</div>
+      <div>Elegantes. Blanco reservado para la novia, verde para la familia del novio y azul para las damas de honor.</div>
+      <a href="${WEDDING_MAP_URL}" style="display:inline-block;margin-top:14px;color:#e50914;font-weight:700">Abrir ubicación en Google Maps</a>
+    </div>`;
+}
 
 function giftDeliveryCopy(gift: Gift) {
   if (gift.category === "Nuestro hogar") {
@@ -155,15 +208,18 @@ export default function Home() {
     setGiftError("");
     const form = new FormData(event.currentTarget);
     const record = doc(collection(firestore, "gift_confirmations"));
+    const giverName = String(form.get("giverName") ?? "").trim().slice(0, 120);
+    const giverEmail = String(form.get("email") ?? "").trim().toLowerCase().slice(0, 180);
+    const dedication = String(form.get("dedication") ?? "").trim().slice(0, 600);
     try {
       await setDoc(record, {
         id: record.id,
         gift_id: selectedGift.id,
         gift_name: selectedGift.name,
         amount: selectedGift.amount,
-        giver_name: String(form.get("giverName") ?? "").trim().slice(0, 120),
-        email: String(form.get("email") ?? "").trim().toLowerCase().slice(0, 180),
-        dedication: String(form.get("dedication") ?? "").trim().slice(0, 600),
+        giver_name: giverName,
+        email: giverEmail,
+        dedication,
         status: "transfer_declared",
         created_at: new Date().toISOString(),
       });
@@ -172,6 +228,35 @@ export default function Home() {
       setGiftStatus("idle");
       setGiftError("No pudimos confirmar el regalo. Revisá tu conexión e intentá nuevamente.");
       return;
+    }
+
+    const safeGiverName = escapeEmailHtml(giverName);
+    const safeGiftName = escapeEmailHtml(selectedGift.name);
+    const safeDedication = escapeEmailHtml(dedication);
+    const formattedAmount = money.format(selectedGift.amount);
+    try {
+      await Promise.all([
+        queueEmail({
+          to: COUPLE_EMAILS,
+          subject: `Nuevo regalo: ${selectedGift.name}`,
+          text: `${giverName} declaró el regalo ${selectedGift.name} por ${formattedAmount}. Dedicatoria: ${dedication}`,
+          html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111"><h1 style="font-family:Georgia,serif">¡Les hicieron un regalo!</h1><p><strong>${safeGiverName}</strong> declaró la transferencia de <strong>${safeGiftName}</strong> por <strong>${formattedAmount}</strong>.</p><p><strong>Dedicatoria:</strong> ${safeDedication}</p><p>Ya pueden verlo en el panel de administración.</p></div>`,
+          eventId: record.id,
+          eventType: "gift",
+          audience: "couple",
+        }),
+        queueEmail({
+          to: [giverEmail],
+          subject: "Recibimos tu regalo para María y Guido",
+          text: `Hola ${giverName}. Recibimos la confirmación de tu regalo: ${selectedGift.name}. ¡Muchas gracias por acompañarnos en esta nueva etapa!`,
+          html: `<div style="max-width:620px;margin:auto;font-family:Arial,sans-serif;line-height:1.65;color:#111"><div style="height:10px;background:#e50914"></div><div style="padding:32px;border:1px solid #ddd"><div style="font-size:42px;color:#e50914;text-align:center">♥</div><h1 style="font-family:Georgia,serif;text-align:center">¡Recibimos tu regalo!</h1><p>Hola <strong>${safeGiverName}</strong>. Quedó registrada tu transferencia para regalarnos <strong>${safeGiftName}</strong>.</p><p>${escapeEmailHtml(selectedGift.thankYou)}</p><p>Nos hace muy felices compartir esta etapa con vos.</p><p><strong>María &amp; Guido</strong></p></div></div>`,
+          eventId: record.id,
+          eventType: "gift",
+          audience: "guest",
+        }),
+      ]);
+    } catch (emailError) {
+      console.error("El regalo se guardó, pero no se pudieron encolar los emails", emailError);
     }
     setGiftStatus("done");
   }
@@ -189,18 +274,25 @@ export default function Home() {
     );
     const recordId = await rsvpDocumentId(email);
     const record = doc(firestore, "rsvps", recordId);
+    const fullName = String(form.get("fullName") ?? "").trim().slice(0, 120);
+    const attendance = String(form.get("attendance") ?? "");
+    const guestNamesText = guestNames.map((name) => String(name ?? "").trim()).filter(Boolean).join(" · ").slice(0, 600);
+    const dietary = String(form.get("dietary") ?? "").trim().slice(0, 300);
+    const transport = form.get("transport") === "yes" ? "yes" : "no";
+    const song = String(form.get("song") ?? "").trim().slice(0, 180);
+    const guestMessage = String(form.get("message") ?? "").trim().slice(0, 500);
     try {
       await setDoc(record, {
         id: recordId,
-        full_name: String(form.get("fullName") ?? "").trim().slice(0, 120),
+        full_name: fullName,
         email,
-        attendance: String(form.get("attendance") ?? ""),
+        attendance,
         guest_count: guestCount,
-        guest_names: guestNames.map((name) => String(name ?? "").trim()).filter(Boolean).join(" · ").slice(0, 600),
-        dietary: String(form.get("dietary") ?? "").trim().slice(0, 300),
-        transport: form.get("transport") === "yes" ? "yes" : "no",
-        song: String(form.get("song") ?? "").trim().slice(0, 180),
-        message: String(form.get("message") ?? "").trim().slice(0, 500),
+        guest_names: guestNamesText,
+        dietary,
+        transport,
+        song,
+        message: guestMessage,
         created_at: new Date().toISOString(),
       });
     } catch (error) {
@@ -208,6 +300,36 @@ export default function Home() {
       setRsvpStatus("idle");
       setRsvpError("No pudimos guardar tu confirmación. Revisá tu conexión e intentá nuevamente.");
       return;
+    }
+
+    const safeFullName = escapeEmailHtml(fullName);
+    const isAttending = attendance === "yes";
+    const attendanceLabel = isAttending ? `Sí, asiste con ${guestCount} persona${guestCount === 1 ? "" : "s"}` : "No puede asistir";
+    try {
+      await Promise.all([
+        queueEmail({
+          to: COUPLE_EMAILS,
+          subject: `Confirmación de asistencia: ${fullName}`,
+          text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones: ${dietary || "—"}. Transporte: ${transport}. Canción: ${song || "—"}. Mensaje: ${guestMessage || "—"}.`,
+          html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111"><h1 style="font-family:Georgia,serif">Nueva confirmación</h1><p><strong>${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><p><strong>Email:</strong> ${escapeEmailHtml(email)}<br><strong>Acompañantes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong>Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong>Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong>Canción:</strong> ${escapeEmailHtml(song || "—")}<br><strong>Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</p><p>La respuesta más reciente ya quedó guardada en el panel.</p></div>`,
+          eventId: recordId,
+          eventType: "rsvp",
+          audience: "couple",
+        }),
+        queueEmail({
+          to: [email],
+          subject: isAttending ? "Tu lugar está confirmado · María & Guido" : "Recibimos tu respuesta · María & Guido",
+          text: isAttending
+            ? `Hola ${fullName}. Recibimos tu confirmación para el casamiento de María y Guido. Sábado 21 de noviembre de 2026 a las 17:30, Darwin Tortugas, Salón Laguna.`
+            : `Hola ${fullName}. Recibimos tu respuesta. Lamentamos que no puedas acompañarnos y te agradecemos mucho por avisarnos. María y Guido.`,
+          html: `<div style="max-width:620px;margin:auto;font-family:Arial,sans-serif;line-height:1.65;color:#111"><div style="height:10px;background:#e50914"></div><div style="padding:32px;border:1px solid #ddd"><div style="font-size:42px;color:#e50914;text-align:center">♥</div><h1 style="font-family:Georgia,serif;text-align:center">${isAttending ? "¡Tu lugar está confirmado!" : "Recibimos tu respuesta"}</h1><p>Hola <strong>${safeFullName}</strong>.</p><p>${isAttending ? `Quedó registrada tu asistencia para ${guestCount} persona${guestCount === 1 ? "" : "s"}. Nos hace muy felices compartir este día con vos.` : "Lamentamos que no puedas acompañarnos, pero te agradecemos mucho por avisarnos."}</p>${isAttending ? weddingSummaryHtml() : ""}<p><strong>María &amp; Guido</strong></p></div></div>`,
+          eventId: recordId,
+          eventType: "rsvp",
+          audience: "guest",
+        }),
+      ]);
+    } catch (emailError) {
+      console.error("La confirmación se guardó, pero no se pudieron encolar los emails", emailError);
     }
     setRsvpStatus("done");
     window.setTimeout(() => {
