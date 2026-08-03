@@ -89,7 +89,7 @@ const money = new Intl.NumberFormat("es-AR", {
 const WEDDING_ALIAS = "regalosmariaguido";
 const COUPLE_EMAILS = ["gboetsch93@gmail.com", "maria.c.obregon@hotmail.com"];
 const WEDDING_MAP_URL = "https://maps.google.com/?q=Darwin+Tortugas";
-const EMAIL_LOGO_URL = "https://gb-films.github.io/MyG/logo-myg.png";
+const EMAIL_LOGO_URL = "https://gb-films.github.io/MyG/logo-myg-white.png";
 
 type MailAudience = "guest" | "couple";
 type MailEventType = "rsvp" | "gift";
@@ -114,17 +114,15 @@ function weddingEmailTemplate({
 }) {
   return `<!doctype html>
   <html lang="es">
-    <body style="margin:0;padding:0;background:#0b0b0b;color:#ffffff">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#0b0b0b">
+    <body style="margin:0;padding:0;background:#ffffff;color:#ffffff">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#ffffff">
         <tr>
           <td align="center" style="padding:28px 14px">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#111111;border:1px solid #333333">
               <tr><td style="height:7px;background:#f20d18;font-size:0;line-height:0">&nbsp;</td></tr>
               <tr>
                 <td align="center" style="padding:30px 28px 10px">
-                  <div style="display:inline-block;background:#ffffff;padding:10px 14px;border-radius:2px">
-                    <img src="${EMAIL_LOGO_URL}" width="92" alt="M&amp;G" style="display:block;width:92px;max-width:92px;height:auto;border:0" />
-                  </div>
+                  <img src="${EMAIL_LOGO_URL}" width="108" alt="M&amp;G" style="display:block;width:108px;max-width:108px;height:auto;border:0" />
                 </td>
               </tr>
               <tr>
