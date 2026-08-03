@@ -357,6 +357,7 @@ export default function Home() {
     const dietary = String(form.get("dietary") ?? "").trim().slice(0, 300);
     const transport = form.get("transport") === "yes" ? "yes" : "no";
     const song = String(form.get("song") ?? "").trim().slice(0, 180);
+    const favoriteMovie = String(form.get("favoriteMovie") ?? "").trim().slice(0, 180);
     const guestMessage = String(form.get("message") ?? "").trim().slice(0, 500);
     try {
       await setDoc(record, {
@@ -369,6 +370,7 @@ export default function Home() {
         dietary,
         transport,
         song,
+        favorite_movie: favoriteMovie,
         message: guestMessage,
         created_at: new Date().toISOString(),
       });
@@ -391,11 +393,11 @@ export default function Home() {
         queueEmail({
           to: COUPLE_EMAILS,
           subject: `Confirmación de asistencia: ${fullName}`,
-          text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones: ${dietary || "—"}. Transporte: ${transport}. Canción: ${song || "—"}. Mensaje: ${guestMessage || "—"}.`,
+          text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones: ${dietary || "—"}. Transporte: ${transport}. Canción: ${song || "—"}. Película favorita: ${favoriteMovie || "—"}. Mensaje: ${guestMessage || "—"}.`,
           html: weddingEmailTemplate({
             eyebrow: "Nueva respuesta",
             title: "Confirmación de asistencia",
-            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
+            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Pel&iacute;cula favorita:</strong> ${escapeEmailHtml(favoriteMovie || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
           }),
           eventId: recordId,
           eventType: "rsvp",
@@ -597,6 +599,10 @@ export default function Home() {
             <label>
               Una canción infaltable
               <input name="song" placeholder="Para la pista" />
+            </label>
+            <label>
+              Película favorita
+              <input name="favoriteMovie" placeholder="Esa que podrías ver mil veces" />
             </label>
             <label className="full">
               Mensaje para los novios
