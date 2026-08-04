@@ -701,31 +701,35 @@ export default function Home() {
                 )}
               </fieldset>
             )}
-            <label>
-              ¿Necesitás transporte?
-              <select name="transport" defaultValue="no">
-                <option value="no">No, voy por mi cuenta</option>
-                <option value="yes">Sí, quiero info del micro</option>
-              </select>
-            </label>
-            <label>
-              Restricciones alimentarias · Persona 1
-              <input name="dietary" placeholder="Vegetariano, celíaco…" />
-            </label>
-            <label>
-              Una canción infaltable
-              <input name="song" placeholder="Para la pista" />
-            </label>
-            <label>
-              Película favorita
-              <input name="favoriteMovie" placeholder="Esa que podrías ver mil veces" />
-            </label>
+            {rsvpAttendance !== "no" && (
+              <>
+                <label>
+                  ¿Necesitás transporte?
+                  <select name="transport" defaultValue="no">
+                    <option value="no">No, voy por mi cuenta</option>
+                    <option value="yes">Sí, quiero info del micro</option>
+                  </select>
+                </label>
+                <label>
+                  Restricciones alimentarias · Persona 1
+                  <input name="dietary" placeholder="Vegetariano, celíaco…" />
+                </label>
+                <label>
+                  Una canción infaltable
+                  <input name="song" placeholder="Para la pista" />
+                </label>
+                <label>
+                  Película favorita
+                  <input name="favoriteMovie" placeholder="Esa que podrías ver mil veces" />
+                </label>
+              </>
+            )}
             <label className="full">
               Mensaje para los novios
               <input name="message" placeholder="Lo que quieras decirnos" />
             </label>
             <button className="submit-button full" disabled={rsvpStatus === "sending"}>
-              {rsvpStatus === "sending" ? "Enviando…" : "Confirmar asistencia"}
+              {rsvpStatus === "sending" ? "Enviando…" : rsvpAttendance === "no" ? "Confirmar ausencia" : "Confirmar asistencia"}
             </button>
             {rsvpError && <p className="rsvp-error full" role="alert">{rsvpError}</p>}
           </form>
@@ -833,7 +837,9 @@ export default function Home() {
               <div><dt>Nombre</dt><dd>{rsvpReview.fullName}</dd></div>
               <div><dt>Email</dt><dd>{rsvpReview.email}</dd></div>
               <div><dt>Respuesta</dt><dd>{rsvpReview.attendance === "yes" ? `Sí, ${rsvpReview.guestCount} persona${rsvpReview.guestCount === 1 ? "" : "s"} en total` : "No puede asistir"}</dd></div>
-              <div><dt>Transporte</dt><dd>{rsvpReview.transport === "yes" ? "Quiere información del micro" : "Va por su cuenta"}</dd></div>
+              {rsvpReview.attendance === "yes" && (
+                <div><dt>Transporte</dt><dd>{rsvpReview.transport === "yes" ? "Quiere información del micro" : "Va por su cuenta"}</dd></div>
+              )}
             </dl>
             {rsvpReview.attendance === "yes" && (
               <div className="rsvp-review-guests">
@@ -848,7 +854,9 @@ export default function Home() {
             )}
             <div className="rsvp-review-actions">
               <button className="rsvp-review-edit" type="button" onClick={() => setRsvpReview(null)}>Volver y corregir</button>
-              <button className="rsvp-review-confirm" type="button" onClick={submitRsvp}>Sí, confirmar asistencia</button>
+              <button className="rsvp-review-confirm" type="button" onClick={submitRsvp}>
+                {rsvpReview.attendance === "no" ? "Sí, confirmar ausencia" : "Sí, confirmar asistencia"}
+              </button>
             </div>
           </section>
         </div>
