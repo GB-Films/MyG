@@ -213,7 +213,7 @@ a { color: inherit; }
 .rsvp-car-image { display: block; height: auto; image-rendering: auto; margin: 42px auto 0; width: min(360px, 94%); }
 .rsvp-form { align-content: start; display: grid; gap: 38px 32px; grid-template-columns: 1fr 1fr; }
 .rsvp-form label, .gift-fields label { color: #4f4d49; display: flex; font-size: 10px; font-weight: 800; gap: 9px; letter-spacing: .12em; flex-direction: column; text-transform: uppercase; }
-.rsvp-form input, .rsvp-form select, .gift-fields input, .gift-fields textarea {
+.rsvp-form input, .rsvp-form select, .rsvp-form textarea, .gift-fields input, .gift-fields textarea {
   background: transparent;
   border: 0;
   border-bottom: 1px solid #8f8c85;
@@ -224,12 +224,13 @@ a { color: inherit; }
   padding: 8px 0;
   text-transform: none;
 }
-.rsvp-form input::placeholder { color: #78756f; }
+.rsvp-form input::placeholder, .rsvp-form textarea::placeholder { color: #78756f; }
 .rsvp-form select { color-scheme: light; }
-.rsvp-form input:focus, .rsvp-form select:focus, .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }
+.rsvp-form input:focus, .rsvp-form select:focus, .rsvp-form textarea:focus, .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }
 .rsvp-form > label { color: var(--ink); font-size: 12px; letter-spacing: .14em; }
-.rsvp-form input, .rsvp-form select { font-family: Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -.01em; min-height: 58px; }
-.rsvp-form input::placeholder { color: #5e5b55; opacity: 1; }
+.rsvp-form input, .rsvp-form select, .rsvp-form textarea { font-family: Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -.01em; min-height: 58px; }
+.rsvp-form textarea { line-height: 1.45; min-height: 118px; resize: vertical; }
+.rsvp-form input::placeholder, .rsvp-form textarea::placeholder { color: #5e5b55; opacity: 1; }
 .gift-fields label { color: #4f4d49; }
 .gift-fields input, .gift-fields textarea { border-bottom-color: #8f8c85; color: var(--ink); font-family: Georgia, serif; font-size: 19px; font-weight: 400; letter-spacing: -.01em; line-height: 1.4; }
 .gift-fields input:focus, .gift-fields textarea:focus { border-color: var(--ink); }

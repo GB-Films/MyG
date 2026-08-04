@@ -454,7 +454,7 @@ export default function Home() {
     const transport = form.get("transport") === "yes" ? "yes" : "no";
     const song = String(form.get("song") ?? "").trim().slice(0, 180);
     const favoriteMovie = String(form.get("favoriteMovie") ?? "").trim().slice(0, 180);
-    const guestMessage = String(form.get("message") ?? "").trim().slice(0, 500);
+    const guestMessage = String(form.get("message") ?? "").trim().slice(0, 5000);
     try {
       await setDoc(record, {
         id: recordId,
@@ -479,6 +479,7 @@ export default function Home() {
     }
 
     const safeFullName = escapeEmailHtml(fullName);
+    const safeGuestMessageHtml = escapeEmailHtml(guestMessage || "—").replace(/\r?\n/g, "<br>");
     const isAttending = attendance === "yes";
     const attendanceLabel = isAttending
       ? guestCount === 1
@@ -494,7 +495,7 @@ export default function Home() {
           html: weddingEmailTemplate({
             eyebrow: "Nueva respuesta",
             title: "Confirmación de asistencia",
-            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones por persona:</strong> ${escapeEmailHtml(dietarySummary)}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Pel&iacute;cula favorita:</strong> ${escapeEmailHtml(favoriteMovie || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
+            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones por persona:</strong> ${escapeEmailHtml(dietarySummary)}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Pel&iacute;cula favorita:</strong> ${escapeEmailHtml(favoriteMovie || "—")}<br><strong style="color:#ffffff">Mensaje:</strong><div style="margin-top:8px;white-space:normal">${safeGuestMessageHtml}</div></div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
           }),
           eventId: recordId,
           eventType: "rsvp",
@@ -726,7 +727,7 @@ export default function Home() {
             )}
             <label className="full">
               Mensaje para los novios
-              <input name="message" placeholder="Lo que quieras decirnos" />
+              <textarea name="message" maxLength={5000} rows={4} placeholder="Lo que quieras decirnos" />
             </label>
             <button className="submit-button full" disabled={rsvpStatus === "sending"}>
               {rsvpStatus === "sending" ? "Enviando…" : rsvpAttendance === "no" ? "Confirmar ausencia" : "Confirmar asistencia"}

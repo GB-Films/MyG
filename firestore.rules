@@ -38,7 +38,7 @@ service cloud.firestore {
         && request.resource.data.favorite_movie is string
         && request.resource.data.favorite_movie.size() <= 180
         && request.resource.data.message is string
-        && request.resource.data.message.size() <= 500
+        && request.resource.data.message.size() <= 5000
         && request.resource.data.created_at is string
         && request.resource.data.created_at.size() <= 40;
     }
@@ -57,10 +57,10 @@ service cloud.firestore {
         && request.resource.data.message.subject.size() <= 200
         && request.resource.data.message.text is string
         && request.resource.data.message.text.size() > 0
-        && request.resource.data.message.text.size() <= 4000
+        && request.resource.data.message.text.size() <= 10000
         && request.resource.data.message.html is string
         && request.resource.data.message.html.size() > 0
-        && request.resource.data.message.html.size() <= 12000
+        && request.resource.data.message.html.size() <= 25000
         && request.resource.data.event_id is string
         && request.resource.data.event_id.size() > 0
         && request.resource.data.event_id.size() <= 128
