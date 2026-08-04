@@ -19,13 +19,14 @@ const sheetDefinitions = {
   rsvps: {
     title: "Confirmaciones",
     index: 0,
-    headers: ["Nombre", "Respuesta", "Cantidad", "Acompañantes", "Comida", "Transporte", "Canción", "Película favorita", "Mensaje", "Email", "Fecha", "ID"],
+    headers: ["Nombre", "Respuesta", "Cantidad", "Acompañantes", "Comida titular", "Comida acompañantes", "Transporte", "Canción", "Película favorita", "Mensaje", "Email", "Fecha", "ID"],
     row: (id, data) => [
       data.full_name || "",
       data.attendance === "yes" ? "Viene" : "No viene",
       Number(data.guest_count || 1),
       data.guest_names || "",
       data.dietary || "",
+      data.guest_dietary || "",
       data.transport === "yes" ? "Sí" : "No",
       data.song || "",
       data.favorite_movie || "",
@@ -38,13 +39,14 @@ const sheetDefinitions = {
   rsvp_history: {
     title: "Historial confirmaciones",
     index: 1,
-    headers: ["Nombre", "Respuesta anterior", "Cantidad", "Acompañantes", "Comida", "Transporte", "Canción", "Película favorita", "Mensaje", "Email", "Fecha original", "Reemplazada el", "ID confirmación", "ID historial"],
+    headers: ["Nombre", "Respuesta anterior", "Cantidad", "Acompañantes", "Comida titular", "Comida acompañantes", "Transporte", "Canción", "Película favorita", "Mensaje", "Email", "Fecha original", "Reemplazada el", "ID confirmación", "ID historial"],
     row: (id, data) => [
       data.full_name || "",
       data.attendance === "yes" ? "Venía" : "No venía",
       Number(data.guest_count || 1),
       data.guest_names || "",
       data.dietary || "",
+      data.guest_dietary || "",
       data.transport === "yes" ? "Sí" : "No",
       data.song || "",
       data.favorite_movie || "",

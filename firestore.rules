@@ -10,7 +10,7 @@ service cloud.firestore {
     function validRsvp(documentId) {
       return request.resource.data.keys().hasOnly([
           'id', 'full_name', 'email', 'attendance', 'guest_count',
-          'guest_names', 'dietary', 'transport', 'song', 'favorite_movie',
+          'guest_names', 'dietary', 'guest_dietary', 'transport', 'song', 'favorite_movie',
           'message', 'created_at'
         ])
         && request.resource.data.id == documentId
@@ -30,6 +30,8 @@ service cloud.firestore {
         && request.resource.data.guest_names.size() <= 600
         && request.resource.data.dietary is string
         && request.resource.data.dietary.size() <= 300
+        && request.resource.data.guest_dietary is string
+        && request.resource.data.guest_dietary.size() <= 1200
         && request.resource.data.transport in ['yes', 'no']
         && request.resource.data.song is string
         && request.resource.data.song.size() <= 180

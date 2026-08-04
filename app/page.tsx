@@ -27,6 +27,16 @@ type Gift = {
   thankYou: string;
 };
 
+type RsvpReview = {
+  form: FormData;
+  fullName: string;
+  email: string;
+  attendance: string;
+  guestCount: number;
+  guests: Array<{ name: string; dietary: string }>;
+  transport: string;
+};
+
 const categoryNotes: Record<GiftCategory, string> = {
   "Luna de miel": "Un recuerdo más para nuestra primera gran aventura de casados.",
   "Nuestro hogar": "Un regalo para estrenar y disfrutar nuestra vida juntos.",
@@ -265,6 +275,7 @@ export default function Home() {
   const [rsvpError, setRsvpError] = useState("");
   const [rsvpAttendance, setRsvpAttendance] = useState<"" | "yes" | "no">("");
   const [rsvpGuestCount, setRsvpGuestCount] = useState(1);
+  const [rsvpReview, setRsvpReview] = useState<RsvpReview | null>(null);
   const [copied, setCopied] = useState(false);
 
   const filteredGifts = useMemo(
@@ -278,9 +289,11 @@ export default function Home() {
   const visibleGifts = filteredGifts.slice((giftPage - 1) * GIFTS_PER_PAGE, giftPage * GIFTS_PER_PAGE);
 
   useEffect(() => {
-    if (!selectedGift) return;
+    if (!selectedGift && !rsvpReview) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedGift(null);
+      if (event.key !== "Escape") return;
+      if (rsvpReview) setRsvpReview(null);
+      else setSelectedGift(null);
     };
     document.body.classList.add("modal-open");
     window.addEventListener("keydown", closeOnEscape);
@@ -288,7 +301,7 @@ export default function Home() {
       document.body.classList.remove("modal-open");
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [selectedGift]);
+  }, [selectedGift, rsvpReview]);
 
   async function copyAlias() {
     await navigator.clipboard.writeText(WEDDING_ALIAS);
@@ -373,16 +386,51 @@ export default function Home() {
     setGiftStatus("done");
   }
 
-  async function submitRsvp(event: FormEvent<HTMLFormElement>) {
+  function requestRsvpReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setRsvpStatus("sending");
     setRsvpError("");
     const form = new FormData(event.currentTarget);
+    const guestCount = Number(form.get("guestCount") || 1);
+    const email = normalizeRsvpEmail(form.get("rsvpEmail"));
+    const fullName = String(form.get("fullName") ?? "").trim().slice(0, 120);
+    const attendance = String(form.get("attendance") ?? "");
+    const guests = [
+      {
+        name: fullName,
+        dietary: String(form.get("dietary") ?? "").trim().slice(0, 300),
+      },
+      ...Array.from({ length: Math.max(0, guestCount - 1) }, (_, index) => ({
+        name: String(form.get(`guestName-${index + 2}`) ?? "").trim().slice(0, 120),
+        dietary: String(form.get(`guestDietary-${index + 2}`) ?? "").trim().slice(0, 300),
+      })),
+    ];
+
+    setRsvpReview({
+      form,
+      fullName,
+      email,
+      attendance,
+      guestCount,
+      guests,
+      transport: form.get("transport") === "yes" ? "yes" : "no",
+    });
+  }
+
+  async function submitRsvp() {
+    if (!rsvpReview) return;
+    const form = rsvpReview.form;
+    setRsvpReview(null);
+    setRsvpStatus("sending");
+    setRsvpError("");
     const guestCount = Number(form.get("guestCount") || 1);
     const email = normalizeRsvpEmail(form.get("rsvpEmail"));
     const guestNames = Array.from(
       { length: Math.max(0, guestCount - 1) },
       (_, index) => form.get(`guestName-${index + 2}`),
+    );
+    const guestDietaries = Array.from(
+      { length: Math.max(0, guestCount - 1) },
+      (_, index) => form.get(`guestDietary-${index + 2}`),
     );
     const recordId = await rsvpDocumentId(email);
     const record = doc(firestore, "rsvps", recordId);
@@ -390,6 +438,19 @@ export default function Home() {
     const attendance = String(form.get("attendance") ?? "");
     const guestNamesText = guestNames.map((name) => String(name ?? "").trim()).filter(Boolean).join(" · ").slice(0, 600);
     const dietary = String(form.get("dietary") ?? "").trim().slice(0, 300);
+    const guestDietaryText = guestNames
+      .map((name, index) => {
+        const cleanName = String(name ?? "").trim();
+        const cleanDietary = String(guestDietaries[index] ?? "").trim();
+        return cleanName ? `${cleanName}: ${cleanDietary || "Sin restricciones"}` : "";
+      })
+      .filter(Boolean)
+      .join(" · ")
+      .slice(0, 1200);
+    const dietarySummary = [
+      `${fullName}: ${dietary || "Sin restricciones"}`,
+      guestDietaryText,
+    ].filter(Boolean).join(" · ");
     const transport = form.get("transport") === "yes" ? "yes" : "no";
     const song = String(form.get("song") ?? "").trim().slice(0, 180);
     const favoriteMovie = String(form.get("favoriteMovie") ?? "").trim().slice(0, 180);
@@ -403,6 +464,7 @@ export default function Home() {
         guest_count: guestCount,
         guest_names: guestNamesText,
         dietary,
+        guest_dietary: guestDietaryText,
         transport,
         song,
         favorite_movie: favoriteMovie,
@@ -428,11 +490,11 @@ export default function Home() {
         queueEmail({
           to: COUPLE_EMAILS,
           subject: `Confirmación de asistencia: ${fullName}`,
-          text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones: ${dietary || "—"}. Transporte: ${transport}. Canción: ${song || "—"}. Película favorita: ${favoriteMovie || "—"}. Mensaje: ${guestMessage || "—"}.`,
+          text: `${fullName} respondió: ${attendanceLabel}. Email: ${email}. Acompañantes: ${guestNamesText || "—"}. Restricciones por persona: ${dietarySummary}. Transporte: ${transport}. Canción: ${song || "—"}. Película favorita: ${favoriteMovie || "—"}. Mensaje: ${guestMessage || "—"}.`,
           html: weddingEmailTemplate({
             eyebrow: "Nueva respuesta",
             title: "Confirmación de asistencia",
-            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones:</strong> ${escapeEmailHtml(dietary || "—")}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Pel&iacute;cula favorita:</strong> ${escapeEmailHtml(favoriteMovie || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
+            content: `<p style="margin:0 0 18px"><strong style="color:#ffffff">${safeFullName}</strong>: ${escapeEmailHtml(attendanceLabel)}.</p><div style="margin:22px 0;padding:20px;background:#191919;border:1px solid #343434;border-left:5px solid #f20d18;color:#e9e6e0"><strong style="color:#ffffff">Email:</strong> ${escapeEmailHtml(email)}<br><strong style="color:#ffffff">Acompa&ntilde;antes:</strong> ${escapeEmailHtml(guestNamesText || "—")}<br><strong style="color:#ffffff">Restricciones por persona:</strong> ${escapeEmailHtml(dietarySummary)}<br><strong style="color:#ffffff">Transporte:</strong> ${transport === "yes" ? "Necesita" : "No necesita"}<br><strong style="color:#ffffff">Canci&oacute;n:</strong> ${escapeEmailHtml(song || "—")}<br><strong style="color:#ffffff">Pel&iacute;cula favorita:</strong> ${escapeEmailHtml(favoriteMovie || "—")}<br><strong style="color:#ffffff">Mensaje:</strong> ${escapeEmailHtml(guestMessage || "—")}</div><p style="margin:0;color:#c8c5c0">La respuesta m&aacute;s reciente ya qued&oacute; guardada en el panel.</p>`,
           }),
           eventId: recordId,
           eventType: "rsvp",
@@ -476,6 +538,19 @@ export default function Home() {
             Confirmar
           </a>
           <a href="#regalos">Regalos</a>
+          <a
+            className="nav-instagram"
+            href="https://www.instagram.com/fiestaguidoymaria/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram de la fiesta de Guido y María"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
         </nav>
       </header>
 
@@ -571,10 +646,10 @@ export default function Home() {
             <span className="success-heart rsvp-success-heart" aria-hidden="true">♥</span>
             <h3>¡Recibimos tu respuesta!</h3>
             <p>Gracias por confirmar. Nos hace muy felices compartir este día con vos.</p>
-            <button type="button" onClick={() => { setRsvpStatus("idle"); setRsvpAttendance(""); setRsvpGuestCount(1); }}>Enviar otra respuesta</button>
+            <button type="button" onClick={() => { setRsvpStatus("idle"); setRsvpAttendance(""); setRsvpGuestCount(1); setRsvpReview(null); }}>Enviar otra respuesta</button>
           </div>
         ) : (
-          <form className="rsvp-form" onSubmit={submitRsvp}>
+          <form className="rsvp-form" onSubmit={requestRsvpReview}>
             <label>
               Nombre y apellido
               <input name="fullName" autoComplete="name" required placeholder="Escribí tu nombre" />
@@ -611,10 +686,16 @@ export default function Home() {
                 {rsvpGuestCount > 1 && (
                   <div className="guest-name-grid">
                     {Array.from({ length: rsvpGuestCount - 1 }, (_, index) => (
-                      <label key={index}>
-                        Persona {index + 2} · nombre y apellido
-                        <input name={`guestName-${index + 2}`} required placeholder={`Nombre completo de la persona ${index + 2}`} />
-                      </label>
+                      <div className="guest-person" key={index}>
+                        <label>
+                          Persona {index + 2} · nombre y apellido
+                          <input name={`guestName-${index + 2}`} required placeholder={`Nombre completo de la persona ${index + 2}`} />
+                        </label>
+                        <label>
+                          Persona {index + 2} · restricciones alimentarias
+                          <input name={`guestDietary-${index + 2}`} placeholder="Vegetariano, celíaco o sin restricciones" />
+                        </label>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -628,7 +709,7 @@ export default function Home() {
               </select>
             </label>
             <label>
-              Restricciones alimentarias
+              Restricciones alimentarias · Persona 1
               <input name="dietary" placeholder="Vegetariano, celíaco…" />
             </label>
             <label>
@@ -738,6 +819,40 @@ export default function Home() {
         <a href="#confirmar">Confirmar</a>
         <a href="#regalos">Regalos</a>
       </div>
+
+      {rsvpReview && (
+        <div className="rsvp-review-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setRsvpReview(null);
+        }}>
+          <section className="rsvp-review-dialog" role="dialog" aria-modal="true" aria-labelledby="rsvp-review-title">
+            <button className="rsvp-review-close" type="button" aria-label="Volver al formulario" onClick={() => setRsvpReview(null)}>×</button>
+            <p className="eyebrow">Último chequeo</p>
+            <h2 id="rsvp-review-title">¿Está todo bien?</h2>
+            <p className="rsvp-review-lead">Revisá los datos antes de enviar la confirmación.</p>
+            <dl className="rsvp-review-summary">
+              <div><dt>Nombre</dt><dd>{rsvpReview.fullName}</dd></div>
+              <div><dt>Email</dt><dd>{rsvpReview.email}</dd></div>
+              <div><dt>Respuesta</dt><dd>{rsvpReview.attendance === "yes" ? `Sí, ${rsvpReview.guestCount} persona${rsvpReview.guestCount === 1 ? "" : "s"} en total` : "No puede asistir"}</dd></div>
+              <div><dt>Transporte</dt><dd>{rsvpReview.transport === "yes" ? "Quiere información del micro" : "Va por su cuenta"}</dd></div>
+            </dl>
+            {rsvpReview.attendance === "yes" && (
+              <div className="rsvp-review-guests">
+                <h3>Asistentes y restricciones</h3>
+                {rsvpReview.guests.map((guest, index) => (
+                  <article key={`${guest.name}-${index}`}>
+                    <strong>Persona {index + 1} · {guest.name}</strong>
+                    <span>{guest.dietary || "Sin restricciones alimentarias"}</span>
+                  </article>
+                ))}
+              </div>
+            )}
+            <div className="rsvp-review-actions">
+              <button className="rsvp-review-edit" type="button" onClick={() => setRsvpReview(null)}>Volver y corregir</button>
+              <button className="rsvp-review-confirm" type="button" onClick={submitRsvp}>Sí, confirmar asistencia</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {selectedGift && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => {
