@@ -288,11 +288,24 @@ export default function Home() {
   const giftPageCount = Math.max(1, Math.ceil(filteredGifts.length / GIFTS_PER_PAGE));
   const visibleGifts = filteredGifts.slice((giftPage - 1) * GIFTS_PER_PAGE, giftPage * GIFTS_PER_PAGE);
 
+  function closeRsvpReview() {
+    if (rsvpStatus === "sending") return;
+    const shouldShowSavedResponse = rsvpStatus === "done";
+    setRsvpReview(null);
+    if (shouldShowSavedResponse) {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document.querySelector(".rsvp-success")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      });
+    }
+  }
+
   useEffect(() => {
     if (!selectedGift && !rsvpReview) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (rsvpReview) setRsvpReview(null);
+      if (rsvpReview) closeRsvpReview();
       else setSelectedGift(null);
     };
     document.body.classList.add("modal-open");
@@ -301,7 +314,7 @@ export default function Home() {
       document.body.classList.remove("modal-open");
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [selectedGift, rsvpReview]);
+  }, [selectedGift, rsvpReview, rsvpStatus]);
 
   async function copyAlias() {
     await navigator.clipboard.writeText(WEDDING_ALIAS);
@@ -419,7 +432,6 @@ export default function Home() {
   async function submitRsvp() {
     if (!rsvpReview) return;
     const form = rsvpReview.form;
-    setRsvpReview(null);
     setRsvpStatus("sending");
     setRsvpError("");
     const guestCount = Number(form.get("guestCount") || 1);
@@ -473,6 +485,7 @@ export default function Home() {
       });
     } catch (error) {
       console.error("No se pudo guardar la confirmación", error);
+      setRsvpReview(null);
       setRsvpStatus("idle");
       setRsvpError("No pudimos guardar tu confirmación. Revisá tu conexión e intentá nuevamente.");
       return;
@@ -521,9 +534,6 @@ export default function Home() {
       console.error("La confirmación se guardó, pero no se pudieron encolar los emails", emailError);
     }
     setRsvpStatus("done");
-    window.setTimeout(() => {
-      document.querySelector(".rsvp-success")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
   }
 
   return (
@@ -827,38 +837,60 @@ export default function Home() {
 
       {rsvpReview && (
         <div className="rsvp-review-backdrop" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setRsvpReview(null);
+          if (event.target === event.currentTarget) closeRsvpReview();
         }}>
           <section className="rsvp-review-dialog" role="dialog" aria-modal="true" aria-labelledby="rsvp-review-title">
-            <button className="rsvp-review-close" type="button" aria-label="Volver al formulario" onClick={() => setRsvpReview(null)}>×</button>
-            <p className="eyebrow">Último chequeo</p>
-            <h2 id="rsvp-review-title">¿Está todo bien?</h2>
-            <p className="rsvp-review-lead">Revisá los datos antes de enviar la confirmación.</p>
-            <dl className="rsvp-review-summary">
-              <div><dt>Nombre</dt><dd>{rsvpReview.fullName}</dd></div>
-              <div><dt>Email</dt><dd>{rsvpReview.email}</dd></div>
-              <div><dt>Respuesta</dt><dd>{rsvpReview.attendance === "yes" ? `Sí, ${rsvpReview.guestCount} persona${rsvpReview.guestCount === 1 ? "" : "s"} en total` : "No puede asistir"}</dd></div>
-              {rsvpReview.attendance === "yes" && (
-                <div><dt>Transporte</dt><dd>{rsvpReview.transport === "yes" ? "Quiere información del micro" : "Va por su cuenta"}</dd></div>
-              )}
-            </dl>
-            {rsvpReview.attendance === "yes" && (
-              <div className="rsvp-review-guests">
-                <h3>Asistentes y restricciones</h3>
-                {rsvpReview.guests.map((guest, index) => (
-                  <article key={`${guest.name}-${index}`}>
-                    <strong>Persona {index + 1} · {guest.name}</strong>
-                    <span>{guest.dietary || "Sin restricciones alimentarias"}</span>
-                  </article>
-                ))}
+            {rsvpStatus === "done" ? (
+              <div className="rsvp-review-success" role="status">
+                <span className="success-heart" aria-hidden="true">♥</span>
+                <p className="eyebrow">Respuesta recibida</p>
+                <h2 id="rsvp-review-title">¡Recibimos tu respuesta!</h2>
+                <p>
+                  {rsvpReview.attendance === "yes"
+                    ? "Gracias por confirmar. Nos hace muy felices compartir este día con vos."
+                    : "Gracias por avisarnos. Los vamos a extrañar y esperamos celebrar juntos muy pronto."}
+                </p>
+                <button type="button" onClick={closeRsvpReview}>Listo</button>
               </div>
+            ) : (
+              <>
+                <button className="rsvp-review-close" type="button" aria-label="Volver al formulario" onClick={closeRsvpReview} disabled={rsvpStatus === "sending"}>×</button>
+                <div className="rsvp-review-content">
+                  <p className="eyebrow">Último chequeo</p>
+                  <h2 id="rsvp-review-title">¿Está todo bien?</h2>
+                  <p className="rsvp-review-lead">Revisá los datos antes de enviar la confirmación.</p>
+                  <dl className="rsvp-review-summary">
+                    <div><dt>Nombre</dt><dd>{rsvpReview.fullName}</dd></div>
+                    <div><dt>Email</dt><dd>{rsvpReview.email}</dd></div>
+                    <div><dt>Respuesta</dt><dd>{rsvpReview.attendance === "yes" ? `Sí, ${rsvpReview.guestCount} persona${rsvpReview.guestCount === 1 ? "" : "s"} en total` : "No puede asistir"}</dd></div>
+                    {rsvpReview.attendance === "yes" && (
+                      <div><dt>Transporte</dt><dd>{rsvpReview.transport === "yes" ? "Quiere información del micro" : "Va por su cuenta"}</dd></div>
+                    )}
+                  </dl>
+                  {rsvpReview.attendance === "yes" && (
+                    <div className="rsvp-review-guests">
+                      <h3>Asistentes y restricciones</h3>
+                      {rsvpReview.guests.map((guest, index) => (
+                        <article key={`${guest.name}-${index}`}>
+                          <strong>Persona {index + 1} · {guest.name}</strong>
+                          <span>{guest.dietary || "Sin restricciones alimentarias"}</span>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="rsvp-review-actions">
+                  <button className="rsvp-review-edit" type="button" onClick={closeRsvpReview} disabled={rsvpStatus === "sending"}>Volver y corregir</button>
+                  <button className="rsvp-review-confirm" type="button" onClick={submitRsvp} disabled={rsvpStatus === "sending"}>
+                    {rsvpStatus === "sending"
+                      ? "Guardando…"
+                      : rsvpReview.attendance === "no"
+                        ? "Sí, confirmar ausencia"
+                        : "Sí, confirmar asistencia"}
+                  </button>
+                </div>
+              </>
             )}
-            <div className="rsvp-review-actions">
-              <button className="rsvp-review-edit" type="button" onClick={() => setRsvpReview(null)}>Volver y corregir</button>
-              <button className="rsvp-review-confirm" type="button" onClick={submitRsvp}>
-                {rsvpReview.attendance === "no" ? "Sí, confirmar ausencia" : "Sí, confirmar asistencia"}
-              </button>
-            </div>
           </section>
         </div>
       )}
