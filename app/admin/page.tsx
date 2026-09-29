@@ -6,6 +6,7 @@ import { collection, deleteDoc, doc, onSnapshot, query } from "firebase/firestor
 import { httpsCallable } from "firebase/functions";
 import { FIREBASE_ADMIN_EMAIL, firebaseAuth, firebaseFunctions, firestore } from "../firebase";
 import { DeleteRecordButton } from "./delete-record-button";
+import { SeatingPlanner } from "./seating-planner";
 
 type RsvpRow = {
   id: string;
@@ -221,6 +222,7 @@ export default function AdminPage() {
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 20, flexWrap: "wrap" }}>
         <div><p style={{ letterSpacing: ".15em", textTransform: "uppercase", fontSize: 11 }}>María & Guido</p><h1 style={{ fontFamily: "Georgia, serif", fontSize: 58, fontWeight: 400, margin: 0 }}>Panel del casamiento</h1></div>
         <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+          <a href="#mesas" style={{ color: "inherit", fontWeight: 700 }}>Organizar mesas ↓</a>
           <a href="https://docs.google.com/spreadsheets/d/1QuPLy0BrwkzNHFP-LJ-nlKmJ0eQORUEb5kJ55gel0ps/edit" target="_blank" rel="noreferrer" style={{ color: "inherit", fontWeight: 700 }}>Abrir Google Sheets</a>
           <button type="button" onClick={syncGoogleSheets} disabled={sheetSyncing} style={{ background: "#f40009", border: 0, color: "white", cursor: sheetSyncing ? "wait" : "pointer", fontWeight: 800, padding: "11px 15px", textTransform: "uppercase" }}>{sheetSyncing ? "Sincronizando…" : "Sincronizar Sheets"}</button>
           <button type="button" onClick={downloadCsv} style={{ background: "transparent", border: 0, color: "inherit", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}>Descargar vista (CSV)</button>
@@ -257,6 +259,8 @@ export default function AdminPage() {
           </tbody>
         </table>
       </div>
+
+      <SeatingPlanner rsvps={rsvps} />
 
       <h2 style={{ marginTop: 48 }}>Regalos declarados</h2>
       <section aria-label="Filtros de regalos" style={{ alignItems: "center", background: "#191918", border: "1px solid #383838", borderBottom: 0, display: "flex", flexWrap: "wrap", gap: 10, padding: 14 }}>

@@ -1,0 +1,106 @@
+.seating {
+  margin: 64px 0;
+  padding-top: 36px;
+  border-top: 1px solid #393939;
+  color: #f4f1eb;
+}
+
+.seating * { box-sizing: border-box; }
+.seating button, .seating input { font: inherit; }
+.seating button { cursor: pointer; }
+.seating-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+.seating-kicker { color: #f10e18; font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+.seating-heading h2 { margin: 7px 0; font-family: Georgia, serif; font-weight: 400; font-size: clamp(32px, 4vw, 50px); }
+.seating-heading p:last-child { max-width: 660px; margin: 0; color: #bcb8b3; line-height: 1.5; }
+.seating-header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 300px; }
+.seating-header-actions span { width: 100%; color: #bcb8b3; text-align: right; font-size: 12px; }
+.seating-header-actions button, .seating-tools button, .seating-manual button { border: 1px solid #f10e18; background: #f10e18; color: white; padding: 10px 15px; font-size: 12px; font-weight: 800; }
+.seating-header-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.seating-header-actions .seating-secondary, .seating-tools button { background: transparent; border-color: #5c5c5c; }
+.seating-status { padding: 12px 16px; border-left: 3px solid #f10e18; background: #1b1b1b; }
+.seating-summary { margin: 25px 0 16px; color: #c9c5bf; font-size: 13px; }
+.seating-summary strong { color: white; }
+.seating-layout { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; min-width: 0; width: 100%; margin: 0; padding: 0; border: 0; }
+.seating-layout:disabled { opacity: .7; }
+.seating-guests, .seating-editor { border: 1px solid #3b3b3b; background: #171717; padding: 17px; }
+.seating-guests h3, .seating-editor h3 { margin: 0 0 14px; font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
+.seating-guests > input, .seating-manual input, .seating-editor input:not([type=checkbox]) { width: 100%; min-width: 0; border: 1px solid #555; border-radius: 0; background: #0c0c0c; color: white; padding: 10px; outline-offset: 2px; }
+.seating-guest-list { max-height: 590px; overflow: auto; margin: 11px -7px 0; padding: 0 7px; }
+.seating-guest-list > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 8px; text-align: left; color: #f4f1eb; background: transparent; border: 0; border-bottom: 1px solid #353535; }
+.seating-guest-list > button:hover, .seating-guest-list > button.selected { background: #3a1d20; }
+.seating-guest-list strong, .seating-guest-list small { display: block; }
+.seating-guest-list strong { font-size: 13px; }
+.seating-guest-list small { margin-top: 4px; color: #aaa6a1; font-size: 11px; }
+.seating-guest-list em { flex: 0 0 auto; max-width: 95px; color: #ed9a9d; font-size: 11px; font-style: normal; text-align: right; }
+.seating-guest-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.seating-guest-actions button { border: 1px solid #666; background: transparent; color: #f4f1eb; padding: 8px; font-size: 11px; }
+.seating-manual { margin-top: 18px; }
+.seating-manual label, .seating-editor label { display: block; color: #c8c3be; font-size: 11px; font-weight: 700; letter-spacing: .05em; }
+.seating-manual > div { display: flex; margin-top: 9px; }
+.seating-manual button { padding: 9px; }
+.seating-workspace { min-width: 0; }
+.seating-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.seating-tools button:hover, .seating-header-actions .seating-secondary:hover { border-color: white; }
+.seating-stage { position: relative; min-height: 510px; overflow: hidden; border: 1px solid #777; background-color: #101010; background-image: linear-gradient(#ffffff0b 1px, transparent 1px), linear-gradient(90deg, #ffffff0b 1px, transparent 1px); background-size: 36px 36px; }
+.seating-stage-caption { position: absolute; top: 12px; left: 14px; color: #858585; font-size: 10px; font-weight: 700; letter-spacing: .15em; pointer-events: none; }
+.seating-item { position: absolute; display: grid; place-items: center; width: 104px; height: 104px; padding: 12px; transform: translate(-50%, -50%); border: 2px solid #e8e2d9; border-radius: 50%; background: #272522; color: white; touch-action: none; user-select: none; cursor: grab !important; }
+.seating-item:active { cursor: grabbing !important; }
+.seating-item.active { outline: 2px solid #f10e18; outline-offset: 6px; }
+.seating-item.target { box-shadow: 0 0 0 8px #f10e1840; }
+.seating-main { width: 144px; height: 82px; border-radius: 9px; }
+.seating-dance { width: 138px; height: 120px; border: 2px dashed #f10e18; border-radius: 8px; background: #42191b; }
+.seating-dj { width: 92px; height: 65px; border-radius: 8px; background: #363636; }
+.seating-couple { width: 94px; height: 68px; border-radius: 8px; background: #422326; }
+.seating-item-label { position: relative; z-index: 1; max-width: 100%; text-align: center; line-height: 1.2; pointer-events: none; }
+.seating-item-label small, .seating-item-label strong, .seating-item-label em { display: block; overflow: hidden; max-width: 100%; text-overflow: ellipsis; }
+.seating-item-label small { color: #cbc4bd; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.seating-item-label strong { margin-top: 3px; font-size: 12px; }
+.seating-item-label em { margin-top: 4px; color: #efb1b2; font-size: 10px; font-style: normal; }
+.seating-seats { position: absolute; inset: 0; pointer-events: none; }
+.seating-seats i { position: absolute; width: 13px; height: 13px; transform: translate(-50%, -50%); border: 2px solid #e8e2d9; border-radius: 50%; background: #101010; }
+.seating-seats i.filled { border-color: #f10e18; background: #f10e18; }
+.seating-editor { display: flex; flex-wrap: wrap; align-items: end; gap: 15px; margin-top: 12px; }
+.seating-editor > div:first-child { min-width: 160px; }
+.seating-editor small { color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+.seating-editor h3 { margin: 3px 0 0; }
+.seating-editor label { min-width: 110px; }
+.seating-editor label input:not([type=checkbox]) { display: block; margin-top: 7px; }
+.seating-editor .seating-check { display: flex; align-items: center; gap: 7px; width: 100%; font-size: 12px; letter-spacing: normal; }
+.seating-check input { accent-color: #f10e18; }
+.seating-assigned { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; width: 100%; font-size: 12px; }
+.seating-assigned > strong { width: 100%; }
+.seating-assigned button { border: 1px solid #555; background: #292929; color: white; padding: 6px 9px; font-size: 11px; }
+.seating-remove { margin-left: auto; border: 0; background: transparent; color: #ff8e93; font-size: 11px; text-decoration: underline; }
+.seating-roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+.seating-roster article { border: 1px solid #444; background: #181818; padding: 14px; }
+.seating-roster h3 { margin: 0 0 4px; font-family: Georgia, serif; font-size: 18px; font-weight: 400; }
+.seating-roster small { display: block; margin-bottom: 11px; color: #ed9a9d; font-size: 10px; }
+.seating-roster p { margin: 5px 0; font-size: 11px; line-height: 1.3; }
+.seating-roster em { color: #a9a49d; font-style: normal; }
+.seating-roster .seating-empty { color: #87827d; }
+@media (max-width: 900px) {
+  .seating-heading, .seating-layout { display: block; }
+  .seating-header-actions { justify-content: flex-start; margin-top: 18px; }
+  .seating-header-actions span { text-align: left; }
+  .seating-guests { margin-bottom: 20px; }
+  .seating-guest-list { max-height: 250px; }
+  .seating-stage { min-height: 500px; }
+}
+@media (max-width: 540px) {
+  .seating { margin: 40px 0; }
+  .seating-stage { min-height: 410px; }
+  .seating-item { width: 78px; height: 78px; }
+  .seating-main { width: 105px; height: 68px; }
+  .seating-dance { width: 100px; height: 88px; }
+  .seating-dj, .seating-couple { width: 75px; height: 55px; }
+  .seating-item-label strong { font-size: 10px; }
+  .seating-seats i { width: 10px; height: 10px; }
+}
+@media print {
+  main > :not(#mesas) { display: none !important; }
+  .seating { margin: 0; padding: 0; color: #111; border: 0; }
+  .seating-heading p:last-child, .seating-header-actions, .seating-guests, .seating-tools, .seating-editor, .seating-status { display: none !important; }
+  .seating-layout { display: block; }
+  .seating-stage { min-height: 680px; border-color: #777; print-color-adjust: exact; }
+  .seating-roster { grid-template-columns: repeat(3, 1fr); }
+}

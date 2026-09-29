@@ -109,6 +109,10 @@ service cloud.firestore {
       allow create, update: if false;
     }
 
+    match /seating_plans/{documentId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
     match /gift_confirmations/{documentId} {
       allow create: if (request.auth == null || isAdmin())
         && request.resource.data.keys().hasOnly([
