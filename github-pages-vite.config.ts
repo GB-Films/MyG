@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "github-pages/index.html"),
         admin: resolve(__dirname, "github-pages/admin/index.html"),
+        quiz: resolve(__dirname, "github-pages/quiz/index.html"),
       },
     },
   },
