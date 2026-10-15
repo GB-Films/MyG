@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef, useState, type ReactNode, type PointerEvent, type MouseEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type PointerEvent, type MouseEvent, type KeyboardEvent } from "react";
 
 export type RoomPoint = { x: number; y: number };
 export type RoomOutline = { points: RoomPoint[] };
 type Draft = { points: RoomPoint[]; closed: boolean };
 type Mode = "rectangle" | "polygon" | "edit";
 
-const limit = (n: number) => Math.round(Math.max(1, Math.min(99, n)) * 10) / 10;
+// The room may extend beyond the old canvas. Applying it expands the canvas.
+const limit = (n: number) => Math.round(n * 10) / 10;
 const cross = (a: RoomPoint, b: RoomPoint, c: RoomPoint) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 
 function validOutline(points: RoomPoint[]) {
@@ -45,6 +46,18 @@ export function RoomOutlineEditor({ outline, disabled, readOnly = false, zoom, o
   const layerRef = useRef<HTMLDivElement>(null);
   const pointer = useRef<{ kind: "corner"; index: number } | { kind: "rectangle"; start: RoomPoint } | null>(null);
   const editing = mode !== null;
+  useEffect(() => {
+    if (!editing) return;
+    const undo = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z" || event.shiftKey || pointer.current) return;
+      event.preventDefault();
+      const previous = history.at(-1);
+      if (!previous) return;
+      setDraft(previous); setMode(previous.closed ? "edit" : "polygon"); setHistory(h => h.slice(0, -1)); setSelectedCorner(null); setError("");
+    };
+    window.addEventListener("keydown", undo);
+    return () => window.removeEventListener("keydown", undo);
+  }, [editing, history]);
   const shown = editing ? draft : { points: outline?.points || [], closed: true };
   const pointString = shown.points.map((p) => `${p.x},${p.y}`).join(" ");
 
@@ -172,7 +185,7 @@ export function RoomOutlineEditor({ outline, disabled, readOnly = false, zoom, o
       onClick={(event) => { event.stopPropagation(); if (mode === "polygon" && index === 0) closePolygon(); else setSelectedCorner(index); }}
       onPointerDown={(event) => {
         event.stopPropagation();
-        if (disabled || mode !== "edit") return;
+        if (disabled || mode !== "edit" || event.button !== 0) return;
         event.preventDefault();
         remember();
         setSelectedCorner(index);
@@ -193,9 +206,9 @@ export function RoomOutlineEditor({ outline, disabled, readOnly = false, zoom, o
           <button type="button" disabled={selectedCorner === null || draft.points.length <= 3 || mode !== "edit"} onClick={() => { if (selectedCorner !== null) removeCorner(selectedCorner); }}>Quitar esquina</button>
           <button type="button" className="seating-outline-apply" disabled={!draft.closed} onClick={finish}>Aplicar contorno</button>
           <button type="button" onClick={() => { setMode(null); pointer.current = null; onEditingChange(false); }}>Cancelar</button>
-          {outline && <button type="button" className="seating-outline-clear" onClick={() => { onApply(null); setMode(null); onEditingChange(false); }}>Quitar contorno</button>}
+          <button type="button" onClick={() => { remember(); setDraft({ points: [{ x: 5, y: 5 }, { x: 95, y: 5 }, { x: 95, y: 95 }, { x: 5, y: 95 }], closed: true }); setMode("edit"); }}>Restablecer rectángulo</button>
         </div>
-        <p>{mode === "rectangle" ? "Arrastrá sobre el plano para dibujar un rectángulo. Después podés agregar y mover esquinas." : mode === "polygon" ? "Tocá cada esquina del salón. Para cerrarlo, tocá el primer punto o «Cerrar contorno». Podés dibujar entrantes, salientes y formas en L." : "Arrastrá las esquinas para dar forma al salón. Tocá una pared para agregar una esquina y crear un entrante o saliente."} Al terminar, aplicá el contorno y guardá el plano.</p>
+        <p>{mode === "rectangle" ? "Arrastrá sobre el plano para dibujar un rectángulo. Después podés agregar y mover esquinas." : mode === "polygon" ? "Tocá cada esquina del salón. Para cerrarlo, tocá el primer punto o «Cerrar contorno». Podés dibujar entrantes, salientes y formas en L." : "Arrastrá las esquinas hacia afuera para ampliar el salón. Tocá una pared para agregar una esquina y crear un entrante o saliente."} Al aplicar el contorno, el plano se amplía y se guarda automáticamente. Ruedita apretada: recorrer el plano.</p>
         {error && <p className="seating-outline-error" role="status">{error}</p>}
       </>}
     </div>}

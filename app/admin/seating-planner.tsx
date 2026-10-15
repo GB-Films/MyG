@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type DragEvent, type PointerEvent } from "react";
 import { doc, getDoc, onSnapshot, runTransaction } from "firebase/firestore";
 import { firestore } from "../firebase";
 import { RoomOutlineEditor, type RoomOutline } from "./room-outline-editor";
@@ -8,6 +8,10 @@ import "./seating-planner.css";
 import { publicSeatingPlan } from "./public-seating";
 import { itemGeometry, seatPosition, type ItemKind, type RoomItem } from "./seating-geometry";
 import { ItemTransformControls } from "./item-transform-controls";
+import { PlanConflictError, PlanSession } from "./plan-session";
+import { downloadSeatingPng } from "./export-seating-png";
+import { Download, Link as LinkIcon, Undo2, Redo2 } from "lucide-react";
+import { applyRoomOutline, DEFAULT_OUTLINE, snapDoor, withRoomDefaults } from "./room-geometry";
 
 type RsvpSource = {
   id: string;
@@ -54,6 +58,18 @@ const planRef = doc(firestore, "seating_plans", "main");
 const publicPlanRef = doc(firestore, "public_seating", "main");
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+async function persistPlan(plan: Plan, expectedVersion: number) {
+  return runTransaction(firestore, async transaction => {
+    const current = await transaction.get(planRef);
+    const version = Number(current.data()?.version || 0);
+    if (version !== expectedVersion) throw new PlanConflictError();
+    const next = { ...plan, version: version + 1, updated_at: new Date().toISOString() };
+    transaction.set(planRef, next);
+    transaction.set(publicPlanRef, publicSeatingPlan(next));
+    return version + 1;
+  });
+}
+
 function guestsFromRsvps(rsvps: RsvpSource[]): Guest[] {
   return rsvps.flatMap((rsvp) => {
     if (rsvp.attendance !== "yes") return [];
@@ -85,11 +101,11 @@ function tableDisplayName(item: RoomItem) {
 }
 
 export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[]; readOnly?: boolean }) {
-  const [plan, setPlan] = useState<Plan>(DEFAULT_PLAN);
+  const [session] = useState(() => new PlanSession(withRoomDefaults(DEFAULT_PLAN), persistPlan));
+  const { plan, dirty, saving, error: saveError, canUndo, canRedo } = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [status, setStatus] = useState("");
   const [selectedItemId, setSelectedItemId] = useState("table-1");
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
@@ -116,12 +132,13 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   const reservedCoupleSeats = (item: RoomItem) => item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster ? 2 : 0;
   const canvasWidth = plan.canvas?.width || 1400;
   const canvasHeight = plan.canvas?.height || 1050;
+  const viewFactor = drawingOutline ? 2 : 1;
 
   function fitCanvas() {
     const container = canvasRef.current;
     if (!container) return;
     fitMode.current = true;
-    setZoom(Math.min((container.clientWidth - 32) / canvasWidth, (container.clientHeight - 32) / canvasHeight, 1.5));
+    setZoom(Math.min((container.clientWidth - 32) / (canvasWidth * viewFactor), (container.clientHeight - 32) / (canvasHeight * viewFactor), 1.5));
     container.scrollTo(0, 0);
   }
 
@@ -132,15 +149,15 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     const rect = container.getBoundingClientRect();
     const anchorX = anchor ? anchor.clientX - rect.left : container.clientWidth / 2;
     const anchorY = anchor ? anchor.clientY - rect.top : container.clientHeight / 2;
-    const centerX = (container.scrollLeft + anchorX - Math.max(16, (container.clientWidth - canvasWidth * zoom) / 2)) / zoom;
-    const centerY = (container.scrollTop + anchorY - Math.max(16, (container.clientHeight - canvasHeight * zoom) / 2)) / zoom;
+    const centerX = (container.scrollLeft + anchorX - Math.max(16, (container.clientWidth - canvasWidth * zoom * viewFactor) / 2)) / zoom;
+    const centerY = (container.scrollTop + anchorY - Math.max(16, (container.clientHeight - canvasHeight * zoom * viewFactor) / 2)) / zoom;
     fitMode.current = false;
     setZoom(bounded);
     requestAnimationFrame(() => container.scrollTo(
-      centerX * bounded + Math.max(16, (container.clientWidth - canvasWidth * bounded) / 2) - anchorX,
-      centerY * bounded + Math.max(16, (container.clientHeight - canvasHeight * bounded) / 2) - anchorY,
+      centerX * bounded + Math.max(16, (container.clientWidth - canvasWidth * bounded * viewFactor) / 2) - anchorX,
+      centerY * bounded + Math.max(16, (container.clientHeight - canvasHeight * bounded * viewFactor) / 2) - anchorY,
     ));
-  }, [zoom, canvasWidth, canvasHeight]);
+  }, [zoom, canvasWidth, canvasHeight, viewFactor]);
 
   useEffect(() => {
     const container = canvasRef.current;
@@ -158,12 +175,12 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   useEffect(() => {
     if (!canvasWidth || !canvasRef.current) return;
     const container = canvasRef.current;
-    const fit = () => { if (fitMode.current) setZoom(Math.min((container.clientWidth - 32) / canvasWidth, (container.clientHeight - 32) / canvasHeight, 1.5)); };
+    const fit = () => { if (fitMode.current) setZoom(Math.min((container.clientWidth - 32) / (canvasWidth * viewFactor), (container.clientHeight - 32) / (canvasHeight * viewFactor), 1.5)); };
     const observer = new ResizeObserver(fit);
     observer.observe(container);
     fit();
     return () => observer.disconnect();
-  }, [canvasWidth, canvasHeight, loading]);
+  }, [canvasWidth, canvasHeight, loading, viewFactor]);
 
   useEffect(() => {
     if (readOnly) return onSnapshot(publicPlanRef, (snapshot) => {
@@ -171,25 +188,44 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
         setStatus("El plano todavía no está publicado. Volvé a visitar este enlace en unos minutos.");
         setLoadFailed(true);
       } else {
-        setPlan(snapshot.data() as Plan);
+        session.load(withRoomDefaults(snapshot.data() as Plan));
         setLoadFailed(false);
       }
       setLoading(false);
     }, () => { setStatus("No pudimos cargar el plano. Revisá tu conexión y recargá la página."); setLoadFailed(true); setLoading(false); });
+    let cancelled = false;
     getDoc(planRef).then((snapshot) => {
+      if (cancelled) return;
       if (snapshot.exists()) {
         const saved = snapshot.data() as Plan;
-        setPlan({ ...DEFAULT_PLAN, ...saved, items: saved.items || DEFAULT_PLAN.items, assignments: saved.assignments || {}, manual_guests: saved.manual_guests || [] });
+        session.load(withRoomDefaults({ ...DEFAULT_PLAN, ...saved, items: saved.items || DEFAULT_PLAN.items, assignments: saved.assignments || {}, manual_guests: saved.manual_guests || [] }));
         setSelectedItemId(saved.items?.[0]?.id || "table-1");
       }
       setLoading(false);
     }).catch((error) => {
+      if (cancelled) return;
       console.error("No se pudo leer el plano", error);
       setStatus("No pudimos cargar el plano. Revisá la conexión antes de editar.");
       setLoadFailed(true);
       setLoading(false);
     });
-  }, [readOnly]);
+    return () => { cancelled = true; };
+  }, [readOnly, session]);
+
+  useEffect(() => { session.resume(); return () => session.pause(); }, [session]);
+
+  useEffect(() => {
+    if (readOnly) return;
+    const keyboard = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || drawingOutline || (event.target as Element)?.closest("input,textarea,select,[contenteditable=true]")) return;
+      if (event.key.toLowerCase() === "z") { event.preventDefault(); if (event.shiftKey) session.redo(); else session.undo(); }
+      else if (event.key.toLowerCase() === "y") { event.preventDefault(); session.redo(); }
+    };
+    window.addEventListener("keydown", keyboard);
+    const online = () => { void session.flush(); };
+    window.addEventListener("online", online);
+    return () => { window.removeEventListener("keydown", keyboard); window.removeEventListener("online", online); };
+  }, [session, readOnly, drawingOutline]);
 
   useEffect(() => {
     if (!dirty && !drawingOutline) return;
@@ -201,10 +237,9 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
   }, [dirty, drawingOutline]);
 
-  function updatePlan(updater: (current: Plan) => Plan) {
+  function updatePlan(updater: (current: Plan) => Plan, key = "") {
     if (readOnly) return;
-    setPlan(updater);
-    setDirty(true);
+    session.change(updater, key);
     setStatus("");
   }
 
@@ -234,12 +269,12 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     let number = 1;
     while (usedNumbers.has(number)) number++;
     const item: RoomItem = { id: crypto.randomUUID(), kind, name: kind === "table" ? `Mesa ${number}` : kind === "door" ? `Puerta ${existing.length + 1}` : labelFor(kind), capacity: kind === "table" || kind === "main" ? 8 : 0, x: 50, y: kind === "door" ? 5 : 35, ...(kind === "table" ? { number } : {}) };
-    updatePlan((current) => ({ ...current, items: [...current.items, item] }));
+    updatePlan((current) => ({ ...current, items: [...current.items, kind === "door" ? snapDoor(item, current.room_outline || DEFAULT_OUTLINE, canvasWidth, canvasHeight) : item] }));
     setSelectedItemId(item.id);
   }
 
   function updateItem(id: string, patch: Partial<RoomItem>) {
-    updatePlan((current) => ({ ...current, items: current.items.map((item) => item.id === id ? { ...item, ...patch } : item) }));
+    updatePlan((current) => ({ ...current, items: current.items.map((item) => item.id === id ? item.kind === "door" ? snapDoor({ ...item, ...patch }, current.room_outline || DEFAULT_OUTLINE, canvasWidth, canvasHeight) : { ...item, ...patch } : item) }), `${id}:${Object.keys(patch).join(",")}`);
   }
 
   function removeItem(id: string) {
@@ -265,6 +300,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     if (selectedGuestId && ["table", "main"].includes(item.kind)) return;
     const stage = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!stage) return;
+    session.beginGesture();
     drag.current = { id: item.id, x: item.x, y: item.y, startX: event.clientX, startY: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -276,14 +312,14 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     const item = plan.items.find(item => item.id === drag.current!.id)!;
     const geometry = itemGeometry(item);
     const angle = geometry.rotation * Math.PI / 180;
-    const marginX = (Math.abs(Math.cos(angle)) * geometry.width + Math.abs(Math.sin(angle)) * geometry.height) / 2 / canvasWidth * 100;
-    const marginY = (Math.abs(Math.sin(angle)) * geometry.width + Math.abs(Math.cos(angle)) * geometry.height) / 2 / canvasHeight * 100;
+    const marginX = item.kind === "door" ? 0 : (Math.abs(Math.cos(angle)) * geometry.width + Math.abs(Math.sin(angle)) * geometry.height) / 2 / canvasWidth * 100;
+    const marginY = item.kind === "door" ? 0 : (Math.abs(Math.sin(angle)) * geometry.width + Math.abs(Math.cos(angle)) * geometry.height) / 2 / canvasHeight * 100;
     const x = clamp(drag.current.x + (event.clientX - drag.current.startX) / stage.width * 100, marginX, 100 - marginX);
     const y = clamp(drag.current.y + (event.clientY - drag.current.startY) / stage.height * 100, marginY, 100 - marginY);
     if (Math.abs(x - drag.current.x) + Math.abs(y - drag.current.y) > 0.3) updateItem(drag.current.id, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
   }
 
-  function onItemPointerUp() { drag.current = null; }
+  function onItemPointerUp() { if (drag.current) { drag.current = null; session.endGesture(); } }
 
   function startPan(event: PointerEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -303,30 +339,6 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     if (guestById.has(guestId)) assignGuest(guestId, item.id);
   }
 
-  async function save() {
-    if (readOnly || loadFailed || drawingOutline) return;
-    setSaving(true);
-    setStatus("");
-    try {
-      const nextVersion = await runTransaction(firestore, async (transaction) => {
-        const current = await transaction.get(planRef);
-        const version = Number(current.data()?.version || 0);
-        if (version !== plan.version) throw new Error("El plano cambió en otra sesión. Recargá la página antes de guardar para evitar reemplazar esos cambios.");
-        const nextPlan = { ...plan, version: version + 1, updated_at: new Date().toISOString() };
-        transaction.set(planRef, nextPlan);
-        transaction.set(publicPlanRef, publicSeatingPlan(nextPlan));
-        return version + 1;
-      });
-      setPlan((current) => ({ ...current, version: nextVersion }));
-      setDirty(false);
-      setStatus("Plano guardado. El enlace compartido ya está actualizado.");
-    } catch (error) {
-      setStatus(error instanceof Error && error.message.startsWith("El plano cambió") ? error.message : "No se pudo guardar el plano. Revisá la conexión y volvé a intentarlo.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
 
   return (
     <section className={`seating seating-studio${readOnly ? " seating-readonly" : ""}`} id="mesas" aria-label="Organizador de mesas">
@@ -334,11 +346,11 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
         <div><p className="seating-kicker">María & Guido · 21.11.2026</p><h2>{readOnly ? "Encontrá tu lugar." : "Diseñá el salón."}</h2><p>{readOnly ? "Buscá tu nombre o elegí una mesa para ver quiénes la comparten." : "Mové las mesas, dibujá el salón y distribuí a tus invitados."}</p></div>
 
       </header>
-      {status && <p className="seating-status" role="status">{status}</p>}
+      {(saveError || status) && <p className="seating-status" role={saveError ? "alert" : "status"}>{saveError || status}</p>}
       {loading && <p role="status">Cargando plano…</p>}
       {!loading && !loadFailed && <>
       <div className="seating-summary"><span><strong>{plan.items.filter(i => i.kind === "table" || i.kind === "main").length}</strong> mesas</span><span><strong>{guests.length}</strong> personas</span><span><strong>{assignedCount}</strong> ubicados</span>{guests.length !== assignedCount && <span>{guests.length - assignedCount} sin mesa</span>}{!readOnly && orphanedAssignments > 0 && <span>{orphanedAssignments} asignaciones para revisar</span>}<a href="#listado-mesas">Ver todas las listas ↓</a></div>
-      <fieldset className="seating-layout" disabled={saving}>
+      <fieldset className="seating-layout">
         <aside className="seating-guests">
           <div className="seating-sidebar-heading"><h3>Invitados</h3><span>{guests.length}</span></div>
           <input aria-label="Buscar invitados" placeholder="Buscar por nombre…" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -357,26 +369,26 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
         </aside>
         <div className="seating-workspace">
           {!readOnly && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button><button type="button" onClick={() => addItem("door")}>+ Puerta</button></div>}
-          <RoomOutlineEditor readOnly={readOnly} outline={plan.room_outline} disabled={loading || loadFailed || saving} zoom={zoom} onEditingChange={(editing) => { setDrawingOutline(editing); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => { const next = { ...current }; if (outline) next.room_outline = outline; else delete next.room_outline; return next; })}>
+          <RoomOutlineEditor readOnly={readOnly} outline={plan.room_outline || DEFAULT_OUTLINE} disabled={loading || loadFailed} zoom={zoom} onEditingChange={(editing) => { fitMode.current = true; setDrawingOutline(editing); requestAnimationFrame(() => canvasRef.current?.scrollTo(0, 0)); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => applyRoomOutline(current, outline || DEFAULT_OUTLINE))}>
           {({ layer, editing }) => <>
             <div className="seating-zoom"><button type="button" onClick={fitCanvas}>Ver todo el salón</button><div className="seating-zoom-controls"><button type="button" aria-label="Alejar plano" onClick={() => changeZoom(zoom / 1.25)}>−</button><label><span className="seating-sr-only">Zoom</span><input aria-label="Zoom del plano" type="range" min=".15" max="2" step=".01" value={zoom} onChange={(event) => changeZoom(Number(event.target.value))} /></label><button type="button" aria-label="Acercar plano" onClick={() => changeZoom(zoom * 1.25)}>+</button><output>{Math.round(zoom * 100)}%</output></div><span className="seating-pan-hint">Arrastrá el fondo para recorrer el plano</span></div>
             <div className="seating-canvas" ref={canvasRef} tabIndex={0} aria-label="Vista del salón, desplazable con las flechas" onPointerDownCapture={event => { if (event.button === 1 && !transforming.current && !drag.current) { event.stopPropagation(); startPan(event); } }} onPointerDown={event => { if (editing || event.button !== 0 || (event.target as Element).closest("button")) return; startPan(event); }} onPointerMove={event => { if (!pan.current) return; event.currentTarget.scrollLeft = pan.current.left - (event.clientX - pan.current.x); event.currentTarget.scrollTop = pan.current.top - (event.clientY - pan.current.y); }} onPointerUp={endPan} onPointerCancel={endPan} onLostPointerCapture={endPan} onAuxClick={event => { if (event.button === 1) event.preventDefault(); }}>
               <div className="seating-canvas-center">
-              <div className="seating-scaled-frame" style={{ width: canvasWidth * zoom, height: canvasHeight * zoom }}>
-                <div className="seating-stage" aria-label={readOnly ? "Plano del salón" : "Plano editable del salón"} style={{ width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
+              <div className="seating-scaled-frame" style={{ width: canvasWidth * zoom * viewFactor, height: canvasHeight * zoom * viewFactor }}>
+                <div className={`seating-stage${editing ? " outline-editing" : ""}`} aria-label={readOnly ? "Plano del salón" : "Plano editable del salón"} style={{ position: "absolute", left: editing ? canvasWidth * zoom / 2 : 0, top: editing ? canvasHeight * zoom / 2 : 0, width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
                   {layer}
                   {plan.items.filter((item) => item.kind !== "couple" || !plan.couple_at_main).map((item) => {
                     const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
                     const isTable = item.kind === "table" || item.kind === "main";
                     const occupied = people.length + reservedCoupleSeats(item);
                     const geometry = itemGeometry(item);
-                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${!readOnly && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={() => { setSelectedItemId(item.id); if (!readOnly && selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={!readOnly && isTable ? (event) => event.preventDefault() : undefined} onDrop={!readOnly && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={item.name}>
+                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${!readOnly && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={() => { setSelectedItemId(item.id); if (!readOnly && selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onLostPointerCapture={onItemPointerUp} onDragOver={!readOnly && isTable ? (event) => event.preventDefault() : undefined} onDrop={!readOnly && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={item.name}>
                       {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => <i key={index} className={index < occupied ? "filled" : ""} style={seatPosition(index, item.capacity, geometry)} />)}</span>}
-                      {item.kind === "door" && <svg className="seating-door-symbol" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 62 H92 M8 62 V8 M8 8 A54 54 0 0 1 62 62" fill="none" stroke="currentColor" strokeWidth="3" /><path d="M8 62 H62" stroke="currentColor" strokeWidth="5" /></svg>}
+                      {item.kind === "door" && <svg className="seating-door-symbol" viewBox="0 -100 100 200" aria-hidden="true"><path d="M0 0 H100" stroke="#1e2518" strokeWidth="9" /><path d="M0 0 V100 M0 100 A100 100 0 0 0 100 0" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M0 -5 V5 M100 -5 V5" stroke="currentColor" strokeWidth="4" /></svg>}
                       <span className="seating-item-label" style={{ transform: `rotate(${-geometry.rotation}deg)` }}>{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
                     </button>;
                   })}
-                  {!readOnly && !editing && !selectedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; }} />}
+                  {!readOnly && !editing && !selectedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; if (active) session.beginGesture(); else session.endGesture(); }} />}
                 </div>
               </div>
               </div>
@@ -385,7 +397,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
           </RoomOutlineEditor>
       {!readOnly && <div className="seating-editor">
             {selectedItem && selectedGeometry ? <>
-              <p className="seating-gesture-hint">Esquinas: tamaño · ↻: girar · Rueda: zoom · Ruedita apretada: mover el plano</p>
+              <p className="seating-gesture-hint">{selectedItem.kind === "door" ? "Arrastrá la puerta sobre una pared · Se orienta automáticamente hacia el interior · Esquinas: ancho" : "Esquinas: tamaño · ↻: girar · Rueda: zoom · Ruedita apretada: mover el plano"}</p>
               <div><small>Elemento seleccionado</small><h3>{selectedItem.name}</h3></div>
               {["table", "main"].includes(selectedItem.kind) && <>
                 <label>Nombre o número<input value={selectedItem.name} maxLength={40} onChange={(event) => updateItem(selectedItem.id, { name: event.target.value })} /></label>
@@ -398,9 +410,9 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
               {["table", "main"].includes(selectedItem.kind) && <label>Forma<select aria-label="Forma de la mesa" value={selectedGeometry.shape} onChange={(event) => { const shape = event.target.value as "circle" | "rectangle"; updateItem(selectedItem.id, { shape, width: shape === "circle" ? 104 : 160, height: 104 }); }}><option value="circle">Circular</option><option value="rectangle">Rectangular</option></select></label>}
               {!["table", "main"].includes(selectedItem.kind) && <label>Nombre<input aria-label="Nombre del elemento" value={selectedItem.name} maxLength={40} onChange={event => updateItem(selectedItem.id, { name: event.target.value })} /></label>}
               <label>{selectedGeometry.shape === "circle" ? "Diámetro" : "Ancho"}<input aria-label="Ancho del elemento" type="number" min="60" max="500" step="5" value={selectedGeometry.width} onChange={event => updateItem(selectedItem.id, { width: clamp(Number(event.target.value) || 60, 60, 500) })} /></label>
-              {selectedGeometry.shape !== "circle" && <label>Alto<input aria-label="Alto del elemento" type="number" min="40" max="500" step="5" value={selectedGeometry.height} onChange={event => updateItem(selectedItem.id, { height: clamp(Number(event.target.value) || 40, 40, 500) })} /></label>}
-              <label>Giro (°)<input aria-label="Rotación del elemento" type="number" min="0" max="359" step="15" value={selectedGeometry.rotation} onChange={event => updateItem(selectedItem.id, { rotation: ((Number(event.target.value) || 0) % 360 + 360) % 360 })} /></label>
-              <button className="seating-quarter-turn" type="button" onClick={() => updateItem(selectedItem.id, { rotation: (selectedGeometry.rotation + 90) % 360 })}>Girar 90° ↻</button>
+              {selectedGeometry.shape !== "circle" && selectedItem.kind !== "door" && <label>Alto<input aria-label="Alto del elemento" type="number" min="40" max="500" step="5" value={selectedGeometry.height} onChange={event => updateItem(selectedItem.id, { height: clamp(Number(event.target.value) || 40, 40, 500) })} /></label>}
+              {selectedItem.kind !== "door" && <><label>Giro (°)<input aria-label="Rotación del elemento" type="number" min="0" max="359" step="15" value={selectedGeometry.rotation} onChange={event => updateItem(selectedItem.id, { rotation: ((Number(event.target.value) || 0) % 360 + 360) % 360 })} /></label>
+              <button className="seating-quarter-turn" type="button" onClick={() => updateItem(selectedItem.id, { rotation: (selectedGeometry.rotation + 90) % 360 })}>Girar 90° ↻</button></>}
               {selectedItem.kind === "main" && !plan.couple_in_roster && <label className="seating-check"><input type="checkbox" checked={plan.couple_at_main} onChange={(event) => setCoupleAtMain(event.target.checked)} />Los novios se sientan en la mesa principal (2 lugares)</label>}
               {selectedItem.kind === "main" && plan.couple_in_roster && <p className="seating-couple-note">Los novios ya están incluidos por nombre en la lista y ocupan sus dos lugares.</p>}
               {["table", "main"].includes(selectedItem.kind) && <details className="seating-assigned"><summary>Personas en esta mesa</summary>{guests.filter((guest) => plan.assignments[guest.id] === selectedItem.id).map((guest) => <button type="button" key={guest.id} onClick={() => assignGuest(guest.id, null)} title="Quitar de la mesa">{guest.name} ×</button>)}</details>}
@@ -408,9 +420,11 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
             </> : <p>Seleccioná una mesa para cambiarle el nombre, los lugares y sus invitados.</p>}
           </div>}
         <div className="seating-header-actions">
-          {!readOnly && <><span aria-live="polite">{loadFailed ? "No se pudo cargar" : drawingOutline ? "Aplicá el contorno para guardar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || drawingOutline || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button></>}
-          <button type="button" className="seating-secondary" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}>Compartir</button>
-          <button type="button" className="seating-secondary" disabled={drawingOutline} onClick={() => window.print()}>Imprimir</button>
+          {!readOnly && <><span className="seating-save-state" aria-live="polite">{loadFailed ? "No se pudo cargar" : saveError ? "Guardado pendiente" : saving ? "Guardando…" : drawingOutline ? "Contorno en edición" : dirty ? "Guardado automático pendiente…" : "Todo guardado"}</span>
+          <button className="seating-secondary seating-icon-button" type="button" aria-label="Deshacer" title="Deshacer · Ctrl+Z" disabled={!canUndo || drawingOutline} onClick={session.undo}><Undo2 size={18} /></button>
+          <button className="seating-secondary seating-icon-button" type="button" aria-label="Rehacer" title="Rehacer · Ctrl+Shift+Z" disabled={!canRedo || drawingOutline} onClick={session.redo}><Redo2 size={18} /></button></>}
+          <button type="button" className="seating-secondary seating-icon-button" aria-label="Copiar enlace" title="Copiar enlace de las mesas" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}><LinkIcon size={18} /></button>
+          <button type="button" className="seating-secondary seating-icon-button" aria-label="Descargar plano PNG" title="Descargar el plano completo en PNG" disabled={loading || loadFailed || drawingOutline || exporting} onClick={async () => { setExporting(true); try { await downloadSeatingPng(plan); setStatus("Plano descargado en PNG."); } catch { setStatus("No se pudo generar el PNG. Volvé a intentarlo."); } finally { setExporting(false); } }}><Download size={18} /></button>
         </div>
         </div>
       </fieldset>

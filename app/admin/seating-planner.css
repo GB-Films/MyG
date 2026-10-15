@@ -111,6 +111,9 @@
 .seating-outline-outside { fill: #0008; }
 .seating-outline-edges line { stroke: transparent; stroke-width: 18px; cursor: copy; }
 .seating-outline-edges line:hover, .seating-outline-edges line:focus { stroke: #edce8e70; }
+.seating-stage.outline-editing { overflow: visible; }
+.seating-stage.outline-editing .seating-outline-layer > svg { overflow: visible; }
+.seating-outline-layer.editing::before { content: ""; position: absolute; inset: -50%; }
 .seating-outline-corner { position: absolute; z-index: 1; padding: 0; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 50%; background: #7f5c27; touch-action: none; cursor: grab !important; }
 .seating-outline-corner.selected, .seating-outline-corner:focus-visible { background: #f10e18; outline: 2px solid #fff; outline-offset: 2px; }
 @media (max-width: 900px) {

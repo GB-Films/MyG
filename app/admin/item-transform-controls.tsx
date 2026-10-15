@@ -16,6 +16,7 @@ export function ItemTransformControls({ item, zoom, canvasWidth, canvasHeight, o
   const layer = useRef<HTMLDivElement>(null);
   const gesture = useRef<{ item: RoomItem; startX: number; startY: number; angle: number; corner?: [number, number] } | null>(null);
   const g = itemGeometry(item);
+  const handles = item.kind === "door" ? [{ name: "izquierda de la puerta", direction: [-1, 0] as [number, number] }, { name: "derecha de la puerta", direction: [1, 0] as [number, number] }] : corners;
   const controlSize = 24 / zoom;
   const rotationBelow = item.y / 100 * canvasHeight - Math.hypot(g.width, g.height) / 2 < 48 / zoom;
 
@@ -47,18 +48,18 @@ export function ItemTransformControls({ item, zoom, canvasWidth, canvasHeight, o
   }
   function finish() { if (gesture.current) { gesture.current = null; onGesture(false); } }
 
-  return <div ref={layer} className="seating-transform" style={{ left: `${item.x}%`, top: `${item.y}%`, width: g.width, height: g.height, transform: `translate(-50%, -50%) rotate(${g.rotation}deg)` }}>
-    {corners.map(({ name, direction }) => <button key={name} type="button" className="seating-resize-handle" aria-label={`Cambiar tamaño desde esquina ${name}`} title="Arrastrá para cambiar el tamaño" style={{ left: direction[0] < 0 ? 0 : "100%", top: direction[1] < 0 ? 0 : "100%", width: controlSize, height: controlSize, cursor: direction[0] === direction[1] ? "nwse-resize" : "nesw-resize" }} onPointerDown={event => start(event, direction)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onClick={event => event.stopPropagation()} onKeyDown={event => {
+  return <div ref={layer} className="seating-transform" style={{ left: `${item.x}%`, top: `${item.y}%`, width: g.width, height: item.kind === "door" ? 2 : g.height, transform: `translate(-50%, -50%) rotate(${g.rotation}deg)` }}>
+    {handles.map(({ name, direction }) => <button key={name} type="button" className="seating-resize-handle" aria-label={`Cambiar tamaño desde esquina ${name}`} title="Arrastrá para cambiar el tamaño" style={{ left: direction[0] < 0 ? 0 : "100%", top: direction[1] < 0 ? 0 : "100%", width: controlSize, height: controlSize, cursor: direction[0] === direction[1] ? "nwse-resize" : "nesw-resize" }} onPointerDown={event => start(event, direction)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onClick={event => event.stopPropagation()} onKeyDown={event => {
       if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault(); const step = event.shiftKey ? 10 : 2;
       const dx = event.key === "ArrowRight" ? step : event.key === "ArrowLeft" ? -step : 0;
       const dy = event.key === "ArrowDown" ? step : event.key === "ArrowUp" ? -step : 0;
       onChange(item.id, resizeFromCorner(item, direction, dx, dy, canvasWidth, canvasHeight));
     }} />)}
-    <span className="seating-rotation-stem" style={{ height: 32 / zoom, top: rotationBelow ? g.height : -32 / zoom }} />
+    {item.kind !== "door" && <><span className="seating-rotation-stem" style={{ height: 32 / zoom, top: rotationBelow ? g.height : -32 / zoom }} />
     <button type="button" className="seating-rotation-handle" aria-label="Girar elemento arrastrando" title="Arrastrá para girar · Shift: pasos de 15°" style={{ top: rotationBelow ? g.height + 32 / zoom : -32 / zoom, width: controlSize, height: controlSize, fontSize: 17 / zoom }} onPointerDown={event => start(event)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onClick={event => event.stopPropagation()} onKeyDown={event => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault(); onChange(item.id, { rotation: (g.rotation + (event.key === "ArrowLeft" ? -1 : 1) * (event.shiftKey ? 15 : 1) + 360) % 360 });
-    }}>↻</button>
+    }}>↻</button></>}
   </div>;
 }
