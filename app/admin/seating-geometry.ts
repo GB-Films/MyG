@@ -28,6 +28,36 @@ export function seatPosition(index: number, count: number, geometry: ReturnType<
   return { left: `${x / w * 100}%`, top: `${y / h * 100}%` };
 }
 
+export type SelectionBox = { left: number; top: number; right: number; bottom: number };
+
+/** Axis-aligned world bounds, including a rectangular table's rotation. */
+export function selectionBounds(item: RoomItem, width: number, height: number): SelectionBox {
+  const g = itemGeometry(item), angle = g.rotation * Math.PI / 180;
+  const halfW = g.shape === "circle" ? g.width / 2 : (Math.abs(Math.cos(angle)) * g.width + Math.abs(Math.sin(angle)) * g.height) / 2;
+  const halfH = g.shape === "circle" ? g.height / 2 : (Math.abs(Math.sin(angle)) * g.width + Math.abs(Math.cos(angle)) * g.height) / 2;
+  const x = item.x / 100 * width, y = item.y / 100 * height;
+  return { left: x - halfW, right: x + halfW, top: y - halfH, bottom: y + halfH };
+}
+
+export function tablesInBox(items: RoomItem[], box: SelectionBox, width: number, height: number) {
+  return items.filter(item => {
+    if (!["table", "main"].includes(item.kind)) return false;
+    const bounds = selectionBounds(item, width, height);
+    return bounds.right >= box.left && bounds.left <= box.right && bounds.bottom >= box.top && bounds.top <= box.bottom;
+  }).map(item => item.id);
+}
+
+/** Clamp the entire group together so no table moves relative to another. */
+export function moveTableGroup(items: RoomItem[], dx: number, dy: number, width: number, height: number) {
+  if (!items.length) return [];
+  const bounds = items.map(item => selectionBounds(item, width, height));
+  const minX = -Math.min(...bounds.map(b => b.left)), maxX = width - Math.max(...bounds.map(b => b.right));
+  const minY = -Math.min(...bounds.map(b => b.top)), maxY = height - Math.max(...bounds.map(b => b.bottom));
+  const x = minX > maxX ? 0 : Math.min(maxX, Math.max(minX, dx));
+  const y = minY > maxY ? 0 : Math.min(maxY, Math.max(minY, dy));
+  return items.map(item => ({ ...item, x: item.x + x / width * 100, y: item.y + y / height * 100 }));
+}
+
 /** Resize in the item's rotated axes, keeping the opposite corner fixed. */
 export function resizeFromCorner(item: RoomItem, corner: [number, number], dx: number, dy: number, canvasWidth: number, canvasHeight: number) {
   const g = itemGeometry(item);
