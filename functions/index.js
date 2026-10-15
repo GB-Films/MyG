@@ -5,8 +5,27 @@ const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { GoogleAuth } = require("google-auth-library");
 const nodemailer = require("nodemailer");
+const { buildSeatingEdit, SeatingEditError } = require("./seating-edit.cjs");
 
 initializeApp();
+
+exports.updateSharedSeating = onCall({ region: "us-central1", invoker: "public", maxInstances: 3, timeoutSeconds: 30 }, async request => {
+  try {
+    const database = getFirestore();
+    const privateRef = database.doc("seating_plans/main"), publicRef = database.doc("public_seating/main");
+    return await database.runTransaction(async transaction => {
+      const [privateSnapshot, publicSnapshot] = await Promise.all([transaction.get(privateRef), transaction.get(publicRef)]);
+      const result = buildSeatingEdit(privateSnapshot.data(), publicSnapshot.data(), request.data);
+      transaction.set(privateRef, result.privatePlan);
+      transaction.set(publicRef, result.publicPlan);
+      return { version: result.version };
+    });
+  } catch (error) {
+    if (error instanceof SeatingEditError) throw new HttpsError(error.code, error.message);
+    console.error("No se pudo guardar la distribución compartida", error);
+    throw new HttpsError("internal", "No pudimos guardar. Volvé a intentarlo.");
+  }
+});
 
 const smtpPassword = defineSecret("firestore-send-email-SMTP_PASSWORD-q2mo");
 const sender = "gboetsch93@gmail.com";

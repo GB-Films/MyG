@@ -1,6 +1,14 @@
 export type ItemKind = "table" | "main" | "couple" | "dance" | "dj" | "door";
 export type RoomItem = { id: string; kind: ItemKind; name: string; capacity: number; x: number; y: number; movie?: string; number?: number; shape?: "circle" | "rectangle"; width?: number; height?: number; rotation?: number };
 
+export function tableNumber(item: RoomItem) {
+  return item.number || Number(item.name.match(/^(?:Mesa\s*)?(\d+)$/i)?.[1]) || 0;
+}
+
+export function tableTitle(item: RoomItem) {
+  return item.movie ?? (/^(?:Mesa\s*\d+|\d+|Mesa principal)$/i.test(item.name.trim()) ? "" : item.name);
+}
+
 export function itemGeometry(item: RoomItem) {
   const defaults = { table: [104, 104], main: [144, 104], couple: [94, 68], dance: [138, 120], dj: [92, 65], door: [100, 70] };
   const shape = item.shape || (item.kind === "table" ? "circle" : "rectangle");

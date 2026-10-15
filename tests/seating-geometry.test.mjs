@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { itemGeometry, seatPosition, resizeFromCorner } from '../app/admin/seating-geometry.ts';
+import { itemGeometry, seatPosition, resizeFromCorner, tableNumber, tableTitle } from '../app/admin/seating-geometry.ts';
+
+test('table numbers and movie names stay independent, including legacy tables', () => {
+  const table={kind:'table',name:'Mesa 1',number:37,movie:'Titanic'};
+  assert.equal(tableNumber(table),37);assert.equal(tableTitle(table),'Titanic');
+  assert.equal(tableNumber({...table,name:'Nueva película'}),37);
+  assert.equal(tableTitle({...table,movie:''}),'');
+  assert.equal(tableNumber({kind:'table',name:'Mesa 9'}),9);
+  assert.equal(tableTitle({kind:'table',name:'Mesa 9'}),'');
+  assert.equal(tableTitle({kind:'table',name:'Nombre anterior'}),'Nombre anterior');
+});
 
 test('existing furniture keeps its dimensions and shape without migrating saved plans', () => {
   assert.deepEqual(itemGeometry({kind:'table'}), {shape:'circle',width:104,height:104,rotation:0});

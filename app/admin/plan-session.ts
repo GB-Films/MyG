@@ -1,7 +1,7 @@
 import type { Plan } from "./seating-planner";
 
 export class PlanConflictError extends Error {}
-type Save = (plan: Plan, version: number) => Promise<number>;
+type Save = (plan: Plan, version: number, base: Plan) => Promise<number>;
 type State = { plan: Plan; dirty: boolean; saving: boolean; error: string; canUndo: boolean; canRedo: boolean };
 
 /** Serializes autosaves; edits made during a request remain queued. */
@@ -21,8 +21,10 @@ export class PlanSession {
   private active = true;
   private persist: Save;
   private delay: number;
+  private savedPlan: Plan;
   constructor(plan: Plan, persist: Save, delay = 700) {
     this.persist = persist; this.delay = delay;
+    this.savedPlan = plan;
     this.state = { plan, dirty: false, saving: false, error: "", canUndo: false, canRedo: false };
   }
   getSnapshot = () => this.state;
@@ -32,6 +34,7 @@ export class PlanSession {
     this.listeners.forEach(fn => fn());
   }
   load(plan: Plan) {
+    this.savedPlan = plan;
     clearTimeout(this.timer); this.version = plan.version; this.past = []; this.future = []; this.revision = 0; this.conflict = false;
     this.emit({ plan, dirty: false, error: "" });
   }
@@ -68,7 +71,8 @@ export class PlanSession {
     const revision = this.revision, snapshot = this.state.plan, expected = this.version;
     this.emit({ saving: true, error: "" });
     try {
-      this.version = await this.persist(snapshot, expected);
+      this.version = await this.persist(snapshot, expected, this.savedPlan);
+      this.savedPlan = { ...snapshot, version: this.version };
       this.emit({ plan: { ...this.state.plan, version: this.version }, saving: false, dirty: this.revision !== revision });
       this.schedule();
     } catch (error) {

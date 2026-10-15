@@ -37,6 +37,8 @@
 .seating-studio .seating-outline-tools p { font-size: 11px; margin-top: 6px; }
 .seating-studio .seating-zoom { gap: 12px; margin: 0; padding: 10px 12px; border-bottom: 1px solid #383838; }
 .seating-zoom-controls { display: flex; align-items: center; gap: 6px; }
+.seating-fit-button { display: inline-flex; align-items: center; gap: 7px; }
+.seating-fit-button kbd { padding: 1px 4px; border: 1px solid #666; border-radius: 3px; color: #ccc; font: 10px Arial, sans-serif; }
 .seating-zoom-controls output { min-width: 38px; color: #ccc; font-size: 11px; }
 .seating-studio .seating-zoom input { width: 85px; accent-color: #f40009; }
 .seating-pan-hint { margin-left: auto; color: #aaa; font-size: 11px; }
@@ -139,6 +141,7 @@
 .seating-studio .seating-editor label { min-width: 0; font-size: 10px; }
 .seating-studio .seating-editor input:not([type=checkbox]), .seating-studio .seating-editor select { width: 68px; height: 31px; display: block; padding: 5px; margin-top: 5px; background: #10100f; color: #f5f2eb; border: 1px solid #555; border-radius: 4px; font: 12px Arial, sans-serif; }
 .seating-studio .seating-editor input:not([type=number]):not([type=checkbox]) { width: 104px; }
+.seating-studio .seating-editor input[aria-label="Nombre de la mesa"] { width: 150px; }
 .seating-studio .seating-editor select { width: 108px; }
 .seating-quarter-turn { border: 1px solid #555; border-radius: 4px; padding: 7px; background: transparent; color: #f5f2eb; font-size: 11px !important; }
 .seating-studio .seating-assigned { display: block; width: auto; font-size: 11px; }
@@ -167,7 +170,6 @@
 .seating-transform .seating-rotation-handle { left: 50%; border-radius: 50%; cursor: grab; }
 .seating-transform button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .seating-rotation-stem { position: absolute; left: 50%; border-left: 2px solid #f5f2eb; }
-.seating-studio .seating-gesture-hint { flex-basis: 100%; font-size: 10px; color: #bbb; margin: 0; }
 @media (min-width: 901px) and (max-width: 1200px) {
   .seating-studio { grid-template-columns: 210px minmax(0, 1fr); }
   .seating-studio .seating-workspace { grid-template-columns: 1fr auto; }

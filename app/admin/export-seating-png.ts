@@ -1,5 +1,5 @@
 import type { Plan } from "./seating-planner";
-import { itemGeometry, seatPosition } from "./seating-geometry";
+import { itemGeometry, seatPosition, tableNumber, tableTitle } from "./seating-geometry";
 
 /** Render the entire room, independently of viewport zoom and selection handles. */
 export async function downloadSeatingPng(plan: Plan) {
@@ -29,10 +29,10 @@ export async function downloadSeatingPng(plan: Plan) {
     }
     ctx.restore();ctx.save();ctx.translate(x,y);ctx.textAlign="center";ctx.textBaseline="middle";
     ctx.fillStyle=table?"#f5f2eb":"#f5f2eb";
-    const label=table?item.name.replace(/^Mesa(?:\s+|(?=\d))/i,"").trim()||String(item.number||""):item.name;
+    const label=table?String(tableNumber(item)||(item.kind==="main"?"Principal":"—")):item.name;
     if(item.kind==="main"){ctx.font="9px Arial";ctx.fillText("PRINCIPAL",0,-25);}
     ctx.font=table?"800 34px Arial":"bold 12px Arial";ctx.fillText(label,0,table?-5:item.kind==="door"?18:0,Math.max(60,g.width-12));
-    if(table){if(item.movie){ctx.font="9px Arial";ctx.fillText(item.movie,0,18,g.width-12);}ctx.font="10px Arial";ctx.fillStyle="#bcbcbc";ctx.fillText(`${occupied}/${item.capacity}`,0,item.movie?32:20);}
+    if(table){const title=tableTitle(item);if(title){ctx.font="9px Arial";ctx.fillText(title,0,18,g.width-12);}ctx.font="10px Arial";ctx.fillStyle="#bcbcbc";ctx.fillText(`${occupied}/${item.capacity}`,0,title?32:20);}
     ctx.restore();
   }
   const blob = await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("No se pudo exportar el plano")),"image/png"));

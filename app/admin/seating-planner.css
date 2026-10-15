@@ -84,6 +84,20 @@
 .seating-assigned > strong { width: 100%; }
 .seating-assigned button { border: 1px solid #555; background: #292929; color: white; padding: 6px 9px; font-size: 11px; }
 .seating-remove { margin-left: auto; border: 0; background: transparent; color: #ff8e93; font-size: 11px; text-decoration: underline; }
+.seating .seating-trash-button { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 7px; border: 1px solid #74272b; border-radius: 4px; color: #ff737a; background: #331417; text-decoration: none; }
+.seating .seating-trash-button:hover { background: #f40009; color: #fff; border-color: #f40009; }
+.seating-delete-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid #454545; border-top: 3px solid #f40009; border-radius: 10px; background: #191918; color: #f5f2eb; box-shadow: 0 20px 80px #0009; font-family: Arial, sans-serif; }
+.seating-delete-dialog::backdrop { background: #000b; backdrop-filter: blur(3px); }
+.seating-delete-content { position: relative; padding: 30px; }
+.seating-dialog-close { position: absolute; right: 12px; top: 12px; padding: 6px; border: 0; background: transparent; color: #aaa; cursor: pointer; }
+.seating-delete-symbol { display: inline-grid; place-items: center; padding: 14px; border-radius: 50%; color: #ff6972; background: #f400091a; margin-bottom: 20px; }
+.seating-delete-content h2 { font: 30px/1.15 Georgia, serif; margin: 10px 0 16px; }
+.seating-delete-content p { font-size: 14px; line-height: 1.6; color: #bbb; }
+.seating-delete-content .seating-delete-name { color: #f5f2eb; font-weight: 700; }
+.seating-delete-actions { display: flex; gap: 10px; margin-top: 25px; }
+.seating-delete-actions button { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; border: 1px solid #666; background: transparent; color: #f5f2eb; padding: 12px 8px; border-radius: 4px; font: 700 12px Arial, sans-serif; cursor: pointer; }
+.seating-delete-actions .seating-delete-confirm { background: #f40009; border-color: #f40009; }
+.seating-delete-actions button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .seating-roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
 .seating-roster article { border: 1px solid #444; background: #181818; padding: 14px; }
 .seating-roster h3 { margin: 0 0 4px; font-family: Georgia, serif; font-size: 18px; font-weight: 400; }

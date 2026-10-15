@@ -18,6 +18,6 @@ export default function TablesPage() {
   }, []);
   return <main className="tables-page">
     <nav className="tables-nav" aria-label="Navegación"><a href="/">M<span>&</span>G</a><span>PLANO DEL SALÓN</span><a href={access === "editor" ? "/mesas/" : "/admin/"}>{access === "editor" ? "Ver enlace público ↗" : "Administrar"}</a></nav>
-    {access === "loading" ? <p className="tables-access" role="status">Cargando…</p> : access === "login" ? <div className="tables-access"><h1>Editar el salón</h1><p>Iniciá sesión en el admin y abrí «Organizar mesas».</p><a href="/admin/">Ir al admin</a><a href="/mesas/">Consultar el plano sin iniciar sesión</a></div> : <SeatingPlanner rsvps={[]} readOnly={access === "public"} />}
+    {access === "loading" ? <p className="tables-access" role="status">Cargando…</p> : access === "login" ? <div className="tables-access"><h1>Editar el salón</h1><p>Iniciá sesión en el admin y abrí «Organizar mesas».</p><a href="/admin/">Ir al admin</a><a href="/mesas/">Abrir el plano compartido</a></div> : <SeatingPlanner rsvps={[]} sharedEdit={access === "public"} />}
   </main>;
 }
