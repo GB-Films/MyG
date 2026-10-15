@@ -431,7 +431,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     event.currentTarget.classList.remove("is-panning");
   }
 
-  function startGuestDrag(event: DragEvent<HTMLButtonElement>, guestId: string) {
+  function startGuestDrag(event: DragEvent<HTMLElement>, guestId: string) {
     if (!fullEdit || !guestById.has(guestId)) { event.preventDefault(); return; }
     event.dataTransfer.setData("application/x-myg-guest", guestId);
     event.dataTransfer.setData("text/plain", guestId);
@@ -442,14 +442,14 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
 
   function endGuestDrag() { setDraggedGuestId(null); setGuestDropTarget(null); }
 
-  function dragGuestOver(event: DragEvent<HTMLButtonElement>, item: RoomItem) {
+  function dragGuestOver(event: DragEvent<HTMLElement>, item: RoomItem) {
     if (!fullEdit || !draggedGuestId) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     setGuestDropTarget(item.id);
   }
 
-  function dropGuest(event: DragEvent<HTMLButtonElement>, item: RoomItem) {
+  function dropGuest(event: DragEvent<HTMLElement>, item: RoomItem) {
     event.preventDefault();
     event.stopPropagation();
     if (!fullEdit) return;
@@ -556,7 +556,12 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
       <div className="seating-roster" aria-label="Distribución por mesa">
         {plan.items.filter((item) => item.kind === "table" || item.kind === "main").sort((a, b) => (a.number || 0) - (b.number || 0)).map((item) => {
           const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
-          return <article key={item.id} className={selectedItemIds.includes(item.id) ? "selected" : ""}><div className="seating-roster-top"><h3 className="seating-roster-number">{tableDisplayName(item)}</h3><small>{people.length + reservedCoupleSeats(item)} personas</small></div>{tableTitle(item) && <p className="seating-roster-movie">{tableTitle(item)}</p>}{item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}{people.length ? people.map((guest) => <p key={guest.id} className={selectedGuestId === guest.id ? "highlighted" : ""}>{guest.name}{fullEdit && guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}</article>;
+          return <article key={item.id} aria-label={`Lista de mesa ${tableDisplayName(item)}`} className={`${selectedItemIds.includes(item.id) ? "selected" : ""}${guestDropTarget === item.id ? " guest-drop-target" : ""}`} onDragOver={fullEdit ? event => dragGuestOver(event, item) : undefined} onDragLeave={fullEdit ? event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGuestDropTarget(null); } : undefined} onDrop={fullEdit ? event => dropGuest(event, item) : undefined}>
+            <div className="seating-roster-top"><h3 className="seating-roster-number">{tableDisplayName(item)}</h3><small>{people.length + reservedCoupleSeats(item)} personas</small></div>
+            {tableTitle(item) && <p className="seating-roster-movie">{tableTitle(item)}</p>}
+            {item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}
+            {people.length ? people.map((guest) => <p key={guest.id} draggable={fullEdit} onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} title={fullEdit ? "Arrastrá a otra mesa para cambiar su ubicación" : undefined} className={`seating-roster-guest${selectedGuestId === guest.id ? " highlighted" : ""}${draggedGuestId === guest.id ? " dragging" : ""}`}>{guest.name}{fullEdit && guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}
+          </article>;
         })}
       </div>
       </>}

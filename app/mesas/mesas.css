@@ -76,6 +76,10 @@
 .seating-studio .seating-roster { grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); gap: 16px; }
 .seating-studio .seating-roster article { border-radius: 4px; padding: 22px; background: #191918; border-color: #383838; break-inside: avoid; }
 .seating-studio .seating-roster article.selected { border-color: #f40009; }
+.seating-studio .seating-roster article.guest-drop-target { border-color: #f40009; outline: 2px dashed #f40009; outline-offset: 3px; background: #291719; }
+.seating-roster-guest[draggable=true] { cursor: grab; }
+.seating-roster-guest[draggable=true]:hover { background: #f4000920; }
+.seating-roster-guest.dragging { opacity: .45; cursor: grabbing; }
 .seating-roster-top { display: flex; align-items: center; justify-content: space-between; }
 .seating-studio .seating-roster-number { font-size: 36px; color: #f5f2eb; }
 .seating-studio .seating-roster p { font-size: 13px; line-height: 1.6; margin: 7px 0; }
