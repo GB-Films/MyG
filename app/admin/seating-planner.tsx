@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent } from "react";
 import { doc, getDoc, onSnapshot, runTransaction } from "firebase/firestore";
 import { firestore } from "../firebase";
 import { RoomOutlineEditor, type RoomOutline } from "./room-outline-editor";
 import "./seating-planner.css";
 import { publicSeatingPlan } from "./public-seating";
 import { itemGeometry, seatPosition, type ItemKind, type RoomItem } from "./seating-geometry";
+import { ItemTransformControls } from "./item-transform-controls";
 
 type RsvpSource = {
   id: string;
@@ -99,6 +100,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   const canvasRef = useRef<HTMLDivElement>(null);
   const fitMode = useRef(true);
   const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const transforming = useRef(false);
   const drag = useRef<{ id: string; x: number; y: number; startX: number; startY: number } | null>(null);
 
   const rsvpGuests = useMemo(() => guestsFromRsvps(rsvps), [rsvps]);
@@ -123,19 +125,35 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     container.scrollTo(0, 0);
   }
 
-  function changeZoom(next: number) {
+  const changeZoom = useCallback((next: number, anchor?: { clientX: number; clientY: number }) => {
     const container = canvasRef.current;
     if (!container) return;
     const bounded = clamp(next, .15, 2);
-    const centerX = (container.scrollLeft + container.clientWidth / 2 - Math.max(16, (container.clientWidth - canvasWidth * zoom) / 2)) / zoom;
-    const centerY = (container.scrollTop + container.clientHeight / 2 - Math.max(16, (container.clientHeight - canvasHeight * zoom) / 2)) / zoom;
+    const rect = container.getBoundingClientRect();
+    const anchorX = anchor ? anchor.clientX - rect.left : container.clientWidth / 2;
+    const anchorY = anchor ? anchor.clientY - rect.top : container.clientHeight / 2;
+    const centerX = (container.scrollLeft + anchorX - Math.max(16, (container.clientWidth - canvasWidth * zoom) / 2)) / zoom;
+    const centerY = (container.scrollTop + anchorY - Math.max(16, (container.clientHeight - canvasHeight * zoom) / 2)) / zoom;
     fitMode.current = false;
     setZoom(bounded);
     requestAnimationFrame(() => container.scrollTo(
-      centerX * bounded + Math.max(16, (container.clientWidth - canvasWidth * bounded) / 2) - container.clientWidth / 2,
-      centerY * bounded + Math.max(16, (container.clientHeight - canvasHeight * bounded) / 2) - container.clientHeight / 2,
+      centerX * bounded + Math.max(16, (container.clientWidth - canvasWidth * bounded) / 2) - anchorX,
+      centerY * bounded + Math.max(16, (container.clientHeight - canvasHeight * bounded) / 2) - anchorY,
     ));
-  }
+  }, [zoom, canvasWidth, canvasHeight]);
+
+  useEffect(() => {
+    const container = canvasRef.current;
+    if (!container) return;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (transforming.current || drag.current || pan.current) return;
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1);
+      changeZoom(zoom * Math.exp(-clamp(delta, -200, 200) * .003), event);
+    };
+    container.addEventListener("wheel", wheel, { passive: false });
+    return () => container.removeEventListener("wheel", wheel);
+  }, [loading, zoom, changeZoom]);
 
   useEffect(() => {
     if (!canvasWidth || !canvasRef.current) return;
@@ -243,7 +261,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   }
 
   function onItemPointerDown(event: PointerEvent<HTMLButtonElement>, item: RoomItem) {
-    if (readOnly) return;
+    if (readOnly || event.button !== 0) return;
     if (selectedGuestId && ["table", "main"].includes(item.kind)) return;
     const stage = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!stage) return;
@@ -266,6 +284,18 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   }
 
   function onItemPointerUp() { drag.current = null; }
+
+  function startPan(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    pan.current = { x: event.clientX, y: event.clientY, left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop };
+    event.currentTarget.classList.add("is-panning");
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function endPan(event: PointerEvent<HTMLDivElement>) {
+    pan.current = null;
+    event.currentTarget.classList.remove("is-panning");
+  }
 
   function dropGuest(event: DragEvent<HTMLButtonElement>, item: RoomItem) {
     event.preventDefault();
@@ -330,7 +360,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
           <RoomOutlineEditor readOnly={readOnly} outline={plan.room_outline} disabled={loading || loadFailed || saving} zoom={zoom} onEditingChange={(editing) => { setDrawingOutline(editing); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => { const next = { ...current }; if (outline) next.room_outline = outline; else delete next.room_outline; return next; })}>
           {({ layer, editing }) => <>
             <div className="seating-zoom"><button type="button" onClick={fitCanvas}>Ver todo el salón</button><div className="seating-zoom-controls"><button type="button" aria-label="Alejar plano" onClick={() => changeZoom(zoom / 1.25)}>−</button><label><span className="seating-sr-only">Zoom</span><input aria-label="Zoom del plano" type="range" min=".15" max="2" step=".01" value={zoom} onChange={(event) => changeZoom(Number(event.target.value))} /></label><button type="button" aria-label="Acercar plano" onClick={() => changeZoom(zoom * 1.25)}>+</button><output>{Math.round(zoom * 100)}%</output></div><span className="seating-pan-hint">Arrastrá el fondo para recorrer el plano</span></div>
-            <div className="seating-canvas" ref={canvasRef} tabIndex={0} aria-label="Vista del salón, desplazable con las flechas" onPointerDown={(event) => { if (editing || event.button !== 0 || (event.target as HTMLElement).closest("button")) return; pan.current = { x: event.clientX, y: event.clientY, left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!pan.current) return; event.currentTarget.scrollLeft = pan.current.left - (event.clientX - pan.current.x); event.currentTarget.scrollTop = pan.current.top - (event.clientY - pan.current.y); }} onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }}>
+            <div className="seating-canvas" ref={canvasRef} tabIndex={0} aria-label="Vista del salón, desplazable con las flechas" onPointerDownCapture={event => { if (event.button === 1 && !transforming.current && !drag.current) { event.stopPropagation(); startPan(event); } }} onPointerDown={event => { if (editing || event.button !== 0 || (event.target as Element).closest("button")) return; startPan(event); }} onPointerMove={event => { if (!pan.current) return; event.currentTarget.scrollLeft = pan.current.left - (event.clientX - pan.current.x); event.currentTarget.scrollTop = pan.current.top - (event.clientY - pan.current.y); }} onPointerUp={endPan} onPointerCancel={endPan} onLostPointerCapture={endPan} onAuxClick={event => { if (event.button === 1) event.preventDefault(); }}>
               <div className="seating-canvas-center">
               <div className="seating-scaled-frame" style={{ width: canvasWidth * zoom, height: canvasHeight * zoom }}>
                 <div className="seating-stage" aria-label={readOnly ? "Plano del salón" : "Plano editable del salón"} style={{ width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
@@ -346,6 +376,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
                       <span className="seating-item-label" style={{ transform: `rotate(${-geometry.rotation}deg)` }}>{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
                     </button>;
                   })}
+                  {!readOnly && !editing && !selectedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; }} />}
                 </div>
               </div>
               </div>
@@ -354,6 +385,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
           </RoomOutlineEditor>
       {!readOnly && <div className="seating-editor">
             {selectedItem && selectedGeometry ? <>
+              <p className="seating-gesture-hint">Esquinas: tamaño · ↻: girar · Rueda: zoom · Ruedita apretada: mover el plano</p>
               <div><small>Elemento seleccionado</small><h3>{selectedItem.name}</h3></div>
               {["table", "main"].includes(selectedItem.kind) && <>
                 <label>Nombre o número<input value={selectedItem.name} maxLength={40} onChange={(event) => updateItem(selectedItem.id, { name: event.target.value })} /></label>
