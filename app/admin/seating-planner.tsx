@@ -15,15 +15,20 @@ type RsvpSource = {
   guest_dietary?: string;
 };
 
-type Guest = { id: string; name: string; dietary: string; group: string; manual?: boolean };
+type Guest = { id: string; name: string; dietary: string; group: string; manual?: boolean; source_row?: number };
 type ItemKind = "table" | "main" | "couple" | "dance" | "dj";
-type RoomItem = { id: string; kind: ItemKind; name: string; capacity: number; x: number; y: number };
+type RoomItem = { id: string; kind: ItemKind; name: string; capacity: number; x: number; y: number; movie?: string; number?: number };
 type Plan = {
   version: number;
   items: RoomItem[];
   assignments: Record<string, string>;
   manual_guests: Guest[];
   couple_at_main: boolean;
+  couple_in_roster?: boolean;
+  guest_source?: "rsvps" | "official";
+  official_guests?: Guest[];
+  canvas?: { width: number; height: number };
+  source?: { url: string; title: string; sheet: string; range: string; imported_at: string; guest_count: number; table_count: number; sha256: string };
   updated_at?: string;
 };
 
@@ -63,6 +68,7 @@ function guestsFromRsvps(rsvps: RsvpSource[]): Guest[] {
 }
 
 function labelFor(kind: ItemKind) {
+  if (kind === "main") return "Principal";
   if (kind === "dance") return "Pista";
   if (kind === "dj") return "Cabina";
   if (kind === "couple") return "Novios";
@@ -80,22 +86,38 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [manualName, setManualName] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; x: number; y: number; startX: number; startY: number } | null>(null);
 
   const rsvpGuests = useMemo(() => guestsFromRsvps(rsvps), [rsvps]);
-  const guests = useMemo(() => [...rsvpGuests, ...plan.manual_guests], [rsvpGuests, plan.manual_guests]);
+  const officialRoster = plan.guest_source === "official";
+  const guests = useMemo(() => officialRoster ? plan.official_guests || [] : [...rsvpGuests, ...plan.manual_guests], [officialRoster, plan.official_guests, rsvpGuests, plan.manual_guests]);
   const guestById = useMemo(() => new Map(guests.map((guest) => [guest.id, guest])), [guests]);
   const selectedItem = plan.items.find((item) => item.id === selectedItemId);
   const assignedCount = guests.filter((guest) => plan.assignments[guest.id] && plan.items.some((item) => item.id === plan.assignments[guest.id])).length;
   const orphanedAssignments = Object.keys(plan.assignments).filter((id) => !guestById.has(id)).length;
   const visibleGuests = guests.filter((guest) => `${guest.name} ${guest.group} ${guest.dietary}`.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es")));
-  const reservedCoupleSeats = (item: RoomItem) => item.kind === "main" && plan.couple_at_main ? 2 : 0;
+  const reservedCoupleSeats = (item: RoomItem) => item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster ? 2 : 0;
+  const canvasWidth = plan.canvas?.width || 0;
+  const canvasHeight = plan.canvas?.height || 0;
+
+  useEffect(() => {
+    if (!canvasWidth || !canvasRef.current) return;
+    const container = canvasRef.current;
+    const fit = () => setZoom(Math.min(1, (container.clientWidth - 2) / canvasWidth));
+    const observer = new ResizeObserver(fit);
+    observer.observe(container);
+    fit();
+    return () => observer.disconnect();
+  }, [canvasWidth]);
 
   useEffect(() => {
     getDoc(planRef).then((snapshot) => {
       if (snapshot.exists()) {
         const saved = snapshot.data() as Plan;
         setPlan({ ...DEFAULT_PLAN, ...saved, items: saved.items || DEFAULT_PLAN.items, assignments: saved.assignments || {}, manual_guests: saved.manual_guests || [] });
+        setSelectedItemId(saved.items?.[0]?.id || "table-1");
       }
       setLoading(false);
     }).catch((error) => {
@@ -144,8 +166,10 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
       setSelectedItemId(existing[0].id);
       return;
     }
-    const number = plan.items.filter((item) => item.kind === "table").length + 1;
-    const item: RoomItem = { id: crypto.randomUUID(), kind, name: kind === "table" ? `Mesa ${number}` : labelFor(kind), capacity: kind === "table" ? 8 : 0, x: 30 + (number % 3) * 18, y: 34 + Math.floor(number / 3) * 16 };
+    const usedNumbers = new Set(plan.items.map((item) => item.number || Number(item.name.match(/^Mesa\s+(\d+)/i)?.[1] || 0)));
+    let number = 1;
+    while (usedNumbers.has(number)) number++;
+    const item: RoomItem = { id: crypto.randomUUID(), kind, name: kind === "table" ? `Mesa ${number}` : labelFor(kind), capacity: kind === "table" ? 8 : 0, x: 50, y: 35, ...(kind === "table" ? { number } : {}) };
     updatePlan((current) => ({ ...current, items: [...current.items, item] }));
     setSelectedItemId(item.id);
   }
@@ -226,7 +250,8 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
         <div className="seating-header-actions"><span aria-live="polite">{loadFailed ? "No se pudo cargar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button><button type="button" className="seating-secondary" onClick={() => window.print()}>Imprimir plano</button></div>
       </header>
       {status && <p className="seating-status" role="status">{status}</p>}
-      <div className="seating-summary"><strong>{guests.length}</strong> invitados que vienen · <strong>{assignedCount}</strong> ubicados · <strong>{guests.length - assignedCount}</strong> sin mesa {orphanedAssignments > 0 && <span>· {orphanedAssignments} asignaciones antiguas para revisar</span>}</div>
+      {officialRoster && plan.source && <p className="seating-source">Lista oficial: <a href={plan.source.url} target="_blank" rel="noreferrer">{plan.source.title}</a>. Los nombres y el total provienen de la planilla; las confirmaciones de la web no agregan personas a este plano.</p>}
+      <div className="seating-summary"><strong>{guests.length}</strong> {officialRoster ? "personas en la lista oficial" : "invitados que vienen"} · <strong>{assignedCount}</strong> ubicados · <strong>{guests.length - assignedCount}</strong> sin mesa {orphanedAssignments > 0 && <span>· {orphanedAssignments} asignaciones antiguas para revisar</span>}</div>
       <fieldset className="seating-layout" disabled={loading || loadFailed || saving}>
         <aside className="seating-guests">
           <h3>Invitados</h3>
@@ -240,13 +265,16 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
             })}
           </div>
           {selectedGuestId && <div className="seating-guest-actions"><button type="button" onClick={() => assignGuest(selectedGuestId, null)}>Dejar sin mesa</button>{plan.manual_guests.some((guest) => guest.id === selectedGuestId) && <button type="button" onClick={() => { updatePlan((current) => ({ ...current, manual_guests: current.manual_guests.filter((guest) => guest.id !== selectedGuestId), assignments: Object.fromEntries(Object.entries(current.assignments).filter(([id]) => id !== selectedGuestId)) })); setSelectedGuestId(null); }}>Quitar persona del plano</button>}</div>}
-          <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}>
+          {!officialRoster && <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}>
             <label htmlFor="seating-new-guest">Agregar persona pendiente</label><div><input id="seating-new-guest" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="Nombre y apellido" maxLength={120} /><button type="submit">Agregar</button></div>
-          </form>
+          </form>}
         </aside>
         <div className="seating-workspace">
           <div className="seating-tools"><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Mesa principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button></div>
-          <div className="seating-stage" aria-label="Plano editable del salón">
+          {canvasWidth > 0 && <div className="seating-zoom"><button type="button" onClick={() => setZoom(Math.min(1, ((canvasRef.current?.clientWidth || canvasWidth) - 2) / canvasWidth))}>Ver todo el salón</button><label>Zoom <input type="range" min="0.15" max="1.2" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label><span>{Math.round(zoom * 100)}%</span></div>}
+          <div className="seating-canvas" ref={canvasRef}>
+          <div className="seating-scaled-frame" style={canvasWidth ? { width: canvasWidth * zoom, height: canvasHeight * zoom } : undefined}>
+          <div className="seating-stage" aria-label="Plano editable del salón" style={canvasWidth ? { width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" } : undefined}>
             <div className="seating-stage-caption">SALÓN · ARRASTRÁ PARA MOVER</div>
             {plan.items.filter((item) => item.kind !== "couple" || !plan.couple_at_main).map((item) => {
               const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
@@ -254,9 +282,11 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
               const occupied = people.length + reservedCoupleSeats(item);
               return <button key={item.id} type="button" className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%` }} onClick={() => { setSelectedItemId(item.id); if (selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={isTable ? (event) => event.preventDefault() : undefined} onDrop={isTable ? (event) => dropGuest(event, item) : undefined} title={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`}>
                 {isTable && <span className="seating-seats" aria-hidden="true">{Array.from({ length: item.capacity }, (_, index) => { const angle = 2 * Math.PI * index / item.capacity; return <i key={index} className={index < occupied ? "filled" : ""} style={{ left: `${50 + Math.cos(angle) * 45}%`, top: `${50 + Math.sin(angle) * 45}%` }} />; })}</span>}
-                <span className="seating-item-label"><small>{labelFor(item.kind)}</small><strong>{item.name}</strong>{isTable && <em>{occupied}/{item.capacity}{item.kind === "main" && plan.couple_at_main ? " · novios" : ""}</em>}</span>
+                <span className="seating-item-label"><small>{labelFor(item.kind)}</small><strong>{item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}{item.kind === "main" && plan.couple_at_main ? " · novios" : ""}</em>}</span>
               </button>;
             })}
+          </div>
+          </div>
           </div>
           <div className="seating-editor">
             {selectedItem ? <>
@@ -269,7 +299,8 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
                   if (capacity >= occupied) updateItem(selectedItem.id, { capacity });
                 }} /></label>
               </>}
-              {selectedItem.kind === "main" && <label className="seating-check"><input type="checkbox" checked={plan.couple_at_main} onChange={(event) => setCoupleAtMain(event.target.checked)} />Los novios se sientan en la mesa principal (2 lugares)</label>}
+              {selectedItem.kind === "main" && !plan.couple_in_roster && <label className="seating-check"><input type="checkbox" checked={plan.couple_at_main} onChange={(event) => setCoupleAtMain(event.target.checked)} />Los novios se sientan en la mesa principal (2 lugares)</label>}
+              {selectedItem.kind === "main" && plan.couple_in_roster && <p className="seating-couple-note">Los novios ya están incluidos por nombre en la lista y ocupan sus dos lugares.</p>}
               {["table", "main"].includes(selectedItem.kind) && <div className="seating-assigned"><strong>Personas en esta mesa</strong>{guests.filter((guest) => plan.assignments[guest.id] === selectedItem.id).map((guest) => <button type="button" key={guest.id} onClick={() => assignGuest(guest.id, null)} title="Quitar de la mesa">{guest.name} ×</button>)}</div>}
               {selectedItem.kind === "table" && <button className="seating-remove" type="button" onClick={() => removeItem(selectedItem.id)}>Quitar mesa y liberar lugares</button>}
             </> : <p>Seleccioná una mesa para cambiarle el nombre, los lugares y sus invitados.</p>}
@@ -277,7 +308,7 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
           <div className="seating-roster" aria-label="Distribución por mesa">
             {plan.items.filter((item) => item.kind === "table" || item.kind === "main").map((item) => {
               const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
-              return <article key={item.id}><h3>{item.name}</h3><small>{people.length + reservedCoupleSeats(item)}/{item.capacity} lugares</small>{item.kind === "main" && plan.couple_at_main && <p>María y Guido</p>}{people.length ? people.map((guest) => <p key={guest.id}>{guest.name}{guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}</article>;
+              return <article key={item.id}><h3>{item.name}</h3>{item.movie && <p className="seating-roster-movie">{item.movie}</p>}<small>{people.length + reservedCoupleSeats(item)}/{item.capacity} lugares</small>{item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}{people.length ? people.map((guest) => <p key={guest.id}>{guest.name}{guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}</article>;
             })}
           </div>
         </div>
