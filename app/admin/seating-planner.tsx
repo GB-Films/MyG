@@ -6,6 +6,7 @@ import { firestore } from "../firebase";
 import { RoomOutlineEditor, type RoomOutline } from "./room-outline-editor";
 import "./seating-planner.css";
 import { publicSeatingPlan } from "./public-seating";
+import { itemGeometry, seatPosition, type ItemKind, type RoomItem } from "./seating-geometry";
 
 type RsvpSource = {
   id: string;
@@ -18,8 +19,6 @@ type RsvpSource = {
 };
 
 type Guest = { id: string; name: string; dietary: string; group: string; manual?: boolean; source_row?: number };
-type ItemKind = "table" | "main" | "couple" | "dance" | "dj";
-type RoomItem = { id: string; kind: ItemKind; name: string; capacity: number; x: number; y: number; movie?: string; number?: number };
 export type Plan = {
   version: number;
   items: RoomItem[];
@@ -76,6 +75,7 @@ function labelFor(kind: ItemKind) {
   if (kind === "dance") return "Pista";
   if (kind === "dj") return "Cabina";
   if (kind === "couple") return "Novios";
+  if (kind === "door") return "Puerta";
   return "Mesa";
 }
 
@@ -106,6 +106,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
   const guests = useMemo(() => officialRoster ? plan.official_guests || [] : [...rsvpGuests, ...plan.manual_guests], [officialRoster, plan.official_guests, rsvpGuests, plan.manual_guests]);
   const guestById = useMemo(() => new Map(guests.map((guest) => [guest.id, guest])), [guests]);
   const selectedItem = plan.items.find((item) => item.id === selectedItemId);
+  const selectedGeometry = selectedItem ? itemGeometry(selectedItem) : null;
   const assignedCount = guests.filter((guest) => plan.assignments[guest.id] && plan.items.some((item) => item.id === plan.assignments[guest.id])).length;
   const orphanedAssignments = Object.keys(plan.assignments).filter((id) => !guestById.has(id)).length;
   const normalizeSearch = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es");
@@ -207,14 +208,14 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
 
   function addItem(kind: ItemKind) {
     const existing = plan.items.filter((item) => item.kind === kind);
-    if (kind !== "table" && existing.length) {
+    if (kind !== "table" && kind !== "door" && existing.length) {
       setSelectedItemId(existing[0].id);
       return;
     }
     const usedNumbers = new Set(plan.items.map((item) => item.number || Number(item.name.match(/^Mesa\s+(\d+)/i)?.[1] || 0)));
     let number = 1;
     while (usedNumbers.has(number)) number++;
-    const item: RoomItem = { id: crypto.randomUUID(), kind, name: kind === "table" ? `Mesa ${number}` : labelFor(kind), capacity: kind === "table" ? 8 : 0, x: 50, y: 35, ...(kind === "table" ? { number } : {}) };
+    const item: RoomItem = { id: crypto.randomUUID(), kind, name: kind === "table" ? `Mesa ${number}` : kind === "door" ? `Puerta ${existing.length + 1}` : labelFor(kind), capacity: kind === "table" || kind === "main" ? 8 : 0, x: 50, y: kind === "door" ? 5 : 35, ...(kind === "table" ? { number } : {}) };
     updatePlan((current) => ({ ...current, items: [...current.items, item] }));
     setSelectedItemId(item.id);
   }
@@ -254,8 +255,13 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     if (!drag.current) return;
     const stage = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!stage) return;
-    const x = clamp(drag.current.x + (event.clientX - drag.current.startX) / stage.width * 100, 7, 93);
-    const y = clamp(drag.current.y + (event.clientY - drag.current.startY) / stage.height * 100, 8, 92);
+    const item = plan.items.find(item => item.id === drag.current!.id)!;
+    const geometry = itemGeometry(item);
+    const angle = geometry.rotation * Math.PI / 180;
+    const marginX = (Math.abs(Math.cos(angle)) * geometry.width + Math.abs(Math.sin(angle)) * geometry.height) / 2 / canvasWidth * 100;
+    const marginY = (Math.abs(Math.sin(angle)) * geometry.width + Math.abs(Math.cos(angle)) * geometry.height) / 2 / canvasHeight * 100;
+    const x = clamp(drag.current.x + (event.clientX - drag.current.startX) / stage.width * 100, marginX, 100 - marginX);
+    const y = clamp(drag.current.y + (event.clientY - drag.current.startY) / stage.height * 100, marginY, 100 - marginY);
     if (Math.abs(x - drag.current.x) + Math.abs(y - drag.current.y) > 0.3) updateItem(drag.current.id, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
   }
 
@@ -296,11 +302,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
     <section className={`seating seating-studio${readOnly ? " seating-readonly" : ""}`} id="mesas" aria-label="Organizador de mesas">
       <header className="seating-heading">
         <div><p className="seating-kicker">María & Guido · 21.11.2026</p><h2>{readOnly ? "Encontrá tu lugar." : "Diseñá el salón."}</h2><p>{readOnly ? "Buscá tu nombre o elegí una mesa para ver quiénes la comparten." : "Mové las mesas, dibujá el salón y distribuí a tus invitados."}</p></div>
-        <div className="seating-header-actions">
-          {!readOnly && <><span aria-live="polite">{loadFailed ? "No se pudo cargar" : drawingOutline ? "Aplicá el contorno para guardar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || drawingOutline || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button></>}
-          <button type="button" className="seating-secondary" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}>Compartir</button>
-          <button type="button" className="seating-secondary" disabled={drawingOutline} onClick={() => window.print()}>Imprimir</button>
-        </div>
+
       </header>
       {status && <p className="seating-status" role="status">{status}</p>}
       {loading && <p role="status">Cargando plano…</p>}
@@ -324,7 +326,7 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
           {readOnly && selectedItem && ["table", "main"].includes(selectedItem.kind) && <div className="seating-table-preview"><small>Mesa seleccionada</small><h3>{tableDisplayName(selectedItem)} <span>{selectedItem.movie}</span></h3><ul>{guests.filter(g => plan.assignments[g.id] === selectedItem.id).map(g => <li key={g.id} className={g.id === selectedGuestId ? "highlighted" : ""}>{g.name}</li>)}</ul></div>}
         </aside>
         <div className="seating-workspace">
-          {!readOnly && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button></div>}
+          {!readOnly && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button><button type="button" onClick={() => addItem("door")}>+ Puerta</button></div>}
           <RoomOutlineEditor readOnly={readOnly} outline={plan.room_outline} disabled={loading || loadFailed || saving} zoom={zoom} onEditingChange={(editing) => { setDrawingOutline(editing); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => { const next = { ...current }; if (outline) next.room_outline = outline; else delete next.room_outline; return next; })}>
           {({ layer, editing }) => <>
             <div className="seating-zoom"><button type="button" onClick={fitCanvas}>Ver todo el salón</button><div className="seating-zoom-controls"><button type="button" aria-label="Alejar plano" onClick={() => changeZoom(zoom / 1.25)}>−</button><label><span className="seating-sr-only">Zoom</span><input aria-label="Zoom del plano" type="range" min=".15" max="2" step=".01" value={zoom} onChange={(event) => changeZoom(Number(event.target.value))} /></label><button type="button" aria-label="Acercar plano" onClick={() => changeZoom(zoom * 1.25)}>+</button><output>{Math.round(zoom * 100)}%</output></div><span className="seating-pan-hint">Arrastrá el fondo para recorrer el plano</span></div>
@@ -337,9 +339,11 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
                     const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
                     const isTable = item.kind === "table" || item.kind === "main";
                     const occupied = people.length + reservedCoupleSeats(item);
-                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${!readOnly && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%` }} onClick={() => { setSelectedItemId(item.id); if (!readOnly && selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={!readOnly && isTable ? (event) => event.preventDefault() : undefined} onDrop={!readOnly && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={item.name}>
-                      {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => { const angle = index / item.capacity * Math.PI * 2 - Math.PI / 2; return <i key={index} className={index < occupied ? "filled" : ""} style={{ left: `${50 + Math.cos(angle) * 50}%`, top: `${50 + Math.sin(angle) * 50}%` }} />; })}</span>}
-                      <span className="seating-item-label">{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
+                    const geometry = itemGeometry(item);
+                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${!readOnly && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={() => { setSelectedItemId(item.id); if (!readOnly && selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={!readOnly && isTable ? (event) => event.preventDefault() : undefined} onDrop={!readOnly && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={item.name}>
+                      {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => <i key={index} className={index < occupied ? "filled" : ""} style={seatPosition(index, item.capacity, geometry)} />)}</span>}
+                      {item.kind === "door" && <svg className="seating-door-symbol" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 62 H92 M8 62 V8 M8 8 A54 54 0 0 1 62 62" fill="none" stroke="currentColor" strokeWidth="3" /><path d="M8 62 H62" stroke="currentColor" strokeWidth="5" /></svg>}
+                      <span className="seating-item-label" style={{ transform: `rotate(${-geometry.rotation}deg)` }}>{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
                     </button>;
                   })}
                 </div>
@@ -348,10 +352,8 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
             </div>
           </>}
           </RoomOutlineEditor>
-        </div>
-      </fieldset>
       {!readOnly && <div className="seating-editor">
-            {selectedItem ? <>
+            {selectedItem && selectedGeometry ? <>
               <div><small>Elemento seleccionado</small><h3>{selectedItem.name}</h3></div>
               {["table", "main"].includes(selectedItem.kind) && <>
                 <label>Nombre o número<input value={selectedItem.name} maxLength={40} onChange={(event) => updateItem(selectedItem.id, { name: event.target.value })} /></label>
@@ -361,12 +363,25 @@ export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[
                   if (capacity >= occupied) updateItem(selectedItem.id, { capacity });
                 }} /></label>
               </>}
+              {["table", "main"].includes(selectedItem.kind) && <label>Forma<select aria-label="Forma de la mesa" value={selectedGeometry.shape} onChange={(event) => { const shape = event.target.value as "circle" | "rectangle"; updateItem(selectedItem.id, { shape, width: shape === "circle" ? 104 : 160, height: 104 }); }}><option value="circle">Circular</option><option value="rectangle">Rectangular</option></select></label>}
+              {!["table", "main"].includes(selectedItem.kind) && <label>Nombre<input aria-label="Nombre del elemento" value={selectedItem.name} maxLength={40} onChange={event => updateItem(selectedItem.id, { name: event.target.value })} /></label>}
+              <label>{selectedGeometry.shape === "circle" ? "Diámetro" : "Ancho"}<input aria-label="Ancho del elemento" type="number" min="60" max="500" step="5" value={selectedGeometry.width} onChange={event => updateItem(selectedItem.id, { width: clamp(Number(event.target.value) || 60, 60, 500) })} /></label>
+              {selectedGeometry.shape !== "circle" && <label>Alto<input aria-label="Alto del elemento" type="number" min="40" max="500" step="5" value={selectedGeometry.height} onChange={event => updateItem(selectedItem.id, { height: clamp(Number(event.target.value) || 40, 40, 500) })} /></label>}
+              <label>Giro (°)<input aria-label="Rotación del elemento" type="number" min="0" max="359" step="15" value={selectedGeometry.rotation} onChange={event => updateItem(selectedItem.id, { rotation: ((Number(event.target.value) || 0) % 360 + 360) % 360 })} /></label>
+              <button className="seating-quarter-turn" type="button" onClick={() => updateItem(selectedItem.id, { rotation: (selectedGeometry.rotation + 90) % 360 })}>Girar 90° ↻</button>
               {selectedItem.kind === "main" && !plan.couple_in_roster && <label className="seating-check"><input type="checkbox" checked={plan.couple_at_main} onChange={(event) => setCoupleAtMain(event.target.checked)} />Los novios se sientan en la mesa principal (2 lugares)</label>}
               {selectedItem.kind === "main" && plan.couple_in_roster && <p className="seating-couple-note">Los novios ya están incluidos por nombre en la lista y ocupan sus dos lugares.</p>}
-              {["table", "main"].includes(selectedItem.kind) && <div className="seating-assigned"><strong>Personas en esta mesa</strong>{guests.filter((guest) => plan.assignments[guest.id] === selectedItem.id).map((guest) => <button type="button" key={guest.id} onClick={() => assignGuest(guest.id, null)} title="Quitar de la mesa">{guest.name} ×</button>)}</div>}
-              {selectedItem.kind === "table" && <button className="seating-remove" type="button" onClick={() => removeItem(selectedItem.id)}>Quitar mesa y liberar lugares</button>}
+              {["table", "main"].includes(selectedItem.kind) && <details className="seating-assigned"><summary>Personas en esta mesa</summary>{guests.filter((guest) => plan.assignments[guest.id] === selectedItem.id).map((guest) => <button type="button" key={guest.id} onClick={() => assignGuest(guest.id, null)} title="Quitar de la mesa">{guest.name} ×</button>)}</details>}
+              {["table", "door", "dance", "dj"].includes(selectedItem.kind) && <button className="seating-remove" type="button" onClick={() => removeItem(selectedItem.id)}>{selectedItem.kind === "table" ? "Quitar mesa y liberar lugares" : "Quitar elemento"}</button>}
             </> : <p>Seleccioná una mesa para cambiarle el nombre, los lugares y sus invitados.</p>}
           </div>}
+        <div className="seating-header-actions">
+          {!readOnly && <><span aria-live="polite">{loadFailed ? "No se pudo cargar" : drawingOutline ? "Aplicá el contorno para guardar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || drawingOutline || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button></>}
+          <button type="button" className="seating-secondary" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}>Compartir</button>
+          <button type="button" className="seating-secondary" disabled={drawingOutline} onClick={() => window.print()}>Imprimir</button>
+        </div>
+        </div>
+      </fieldset>
       <div className="seating-roster-heading" id="listado-mesas"><div><p className="seating-kicker">La compañía perfecta</p><h2>Todas las mesas.</h2></div><p>{guests.length} personas · {plan.items.filter(i => i.kind === "table" || i.kind === "main").length} mesas</p></div>
       <div className="seating-roster" aria-label="Distribución por mesa">
         {plan.items.filter((item) => item.kind === "table" || item.kind === "main").sort((a, b) => (a.number || 0) - (b.number || 0)).map((item) => {

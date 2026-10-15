@@ -16,7 +16,7 @@
 .seating-studio .seating-header-actions button { border-radius: 6px; }
 .seating-studio .seating-header-actions button:not(.seating-secondary) { background: #d7c49b; border-color: #d7c49b; color: #191c16; }
 .seating-studio .seating-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; margin: 16px 0; font-size: 12px; }
-.seating-studio .seating-status { position: fixed; right: 24px; bottom: 20px; z-index: 30; max-width: min(440px, calc(100vw - 48px)); margin: 0; border-color: #d7c49b; border-radius: 6px; box-shadow: 0 5px 30px #0008; font-size: 13px; }
+.seating-studio .seating-status { position: fixed; right: 24px; top: 54px; z-index: 30; max-width: min(440px, calc(100vw - 48px)); margin: 0; border-color: #d7c49b; border-radius: 6px; box-shadow: 0 5px 30px #0008; font-size: 13px; }
 .seating-summary a { margin-left: auto; text-underline-offset: 4px; }
 .seating-studio .seating-layout { grid-template-columns: 280px minmax(0, 1fr); align-items: stretch; height: max(520px, calc(100dvh - 224px)); gap: 16px; }
 .seating-studio .seating-guests { display: flex; flex-direction: column; min-height: 0; border-radius: 10px; padding: 16px; margin: 0; background: #1b1e18; border-color: #393e33; }
@@ -101,7 +101,83 @@
   .seating-roster-heading { display: block; margin-top: 32px; }
   .seating-roster-heading h2 { font-size: 30px; }
 }
+/* Full-height drawing surface with compact controls underneath. */
+@media (min-width: 901px) {
+  .tables-page { padding: 0 18px 40px; }
+  .tables-nav { height: 48px; }
+  .seating-studio { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); gap: 0 14px; padding-top: 12px; }
+  .seating-studio .seating-heading { grid-column: 1; grid-row: 1; display: block; padding: 8px 0; }
+  .seating-studio .seating-heading h2 { font-size: 29px; }
+  .seating-studio .seating-heading p:last-child { font-size: 12px; }
+  .seating-studio .seating-summary { grid-column: 1; grid-row: 2; gap: 8px 12px; margin: 8px 0 14px; font-size: 11px; }
+  .seating-studio .seating-summary a { width: 100%; margin: 2px 0 0; }
+  .seating-studio .seating-layout { display: contents; }
+  .seating-studio .seating-guests { grid-column: 1; grid-row: 3; overflow: hidden; }
+  .seating-studio .seating-workspace { grid-column: 2; grid-row: 1 / 4; height: calc(100dvh - 76px); min-height: 520px; }
+  .seating-studio .seating-roster-heading, .seating-studio .seating-roster { grid-column: 1 / -1; }
+}
+.seating-studio .seating-workspace { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: minmax(220px, 1fr) auto auto; }
+.seating-studio .seating-canvas { grid-column: 1 / -1; grid-row: 1; background-color: #1e2518; background-image: linear-gradient(#ccd6be08 1px, transparent 1px), linear-gradient(90deg, #ccd6be08 1px, transparent 1px); background-size: 36px 36px; }
+.seating-studio .seating-stage { border: 0; background: transparent; }
+.seating-studio .seating-tools { grid-column: 1; grid-row: 2; padding: 9px; gap: 5px; flex-wrap: nowrap; }
+.seating-studio .seating-tools > span { display: none; }
+.seating-studio .seating-outline-tools { grid-column: 2; grid-row: 2; margin: 0; padding: 9px 0; align-self: center; }
+.seating-studio .seating-outline-tools.editing { grid-column: 1 / -1; grid-row: 3; margin: 0; border-width: 1px 0 0; max-height: 150px; overflow: auto; }
+.seating-studio .seating-workspace:has(.seating-outline-tools.editing) .seating-editor { display: none; }
+.seating-studio .seating-workspace:has(.seating-outline-tools.editing) .seating-header-actions { display: none; }
+.seating-studio .seating-workspace:has(.seating-outline-tools.editing) .seating-header-actions .seating-secondary { display: none; }
+.seating-studio .seating-zoom { grid-column: 3; grid-row: 2; padding: 9px; border: 0; gap: 6px; }
+.seating-studio .seating-pan-hint { display: none; }
+.seating-studio .seating-zoom input { width: 65px; }
+.seating-studio .seating-tools button, .seating-studio .seating-zoom button, .seating-studio .seating-outline-tools button { white-space: nowrap; padding: 7px 8px; font-size: 11px; }
+.seating-studio .seating-editor { grid-column: 1 / 3; grid-row: 3; margin: 0; padding: 10px; border: 0; border-top: 1px solid #3d4434; border-radius: 0; gap: 8px; max-height: 165px; overflow: auto; align-content: start; }
+.seating-studio .seating-editor > div:first-child { min-width: 80px; max-width: 130px; }
+.seating-studio .seating-editor h3 { font: 600 14px Arial, sans-serif; }
+.seating-studio .seating-editor label { min-width: 0; font-size: 10px; }
+.seating-studio .seating-editor input:not([type=checkbox]), .seating-studio .seating-editor select { width: 68px; height: 31px; display: block; padding: 5px; margin-top: 5px; background: #11170e; color: #f4f1eb; border: 1px solid #515c43; border-radius: 4px; font: 12px Arial, sans-serif; }
+.seating-studio .seating-editor input:not([type=number]):not([type=checkbox]) { width: 104px; }
+.seating-studio .seating-editor select { width: 108px; }
+.seating-quarter-turn { border: 1px solid #515c43; border-radius: 4px; padding: 7px; background: transparent; color: #e7d6ad; font-size: 11px !important; }
+.seating-studio .seating-assigned { display: block; width: auto; font-size: 11px; }
+.seating-assigned summary { cursor: pointer; }
+.seating-assigned[open] { width: 100%; }
+.seating-assigned button { margin: 5px 5px 0 0; }
+.seating-studio .seating-remove { font-size: 10px; }
+.seating-studio .seating-couple-note { margin: 0; font-size: 10px; }
+.seating-studio .seating-header-actions { grid-column: 3; grid-row: 3; border-top: 1px solid #3d4434; padding: 10px; gap: 6px; align-content: start; min-width: 0; margin: 0; }
+.seating-studio .seating-header-actions button { padding: 8px; font-size: 11px; }
+.seating-studio .seating-header-actions span { font-size: 10px; }
+.seating-readonly .seating-header-actions { grid-column: 1 / 3; grid-row: 2; border: 0; justify-content: start; }
+.seating-studio.seating-readonly .seating-workspace { grid-template-rows: minmax(220px, 1fr) auto; }
+.seating-studio .seating-door { background: transparent; border: 0; color: #c9e0ef; padding: 0; }
+.seating-door-symbol { position: absolute; width: 100%; height: 100%; inset: 0; pointer-events: none; }
+.seating-door .seating-item-label { position: absolute; top: 100%; width: 120px; background: #172015c9; border-radius: 3px; padding: 3px; color: #c9e0ef; }
+.seating-door .seating-item-label small { display: none; }
+@media (min-width: 901px) and (max-width: 1200px) {
+  .seating-studio { grid-template-columns: 210px minmax(0, 1fr); }
+  .seating-studio .seating-workspace { grid-template-columns: 1fr auto; }
+  .seating-studio .seating-tools { flex-wrap: wrap; }
+  .seating-studio .seating-outline-tools { grid-column: 1; grid-row: 3; padding: 0 9px 8px; }
+  .seating-studio .seating-zoom { grid-column: 2; }
+  .seating-studio .seating-editor { grid-column: 1; grid-row: 4; }
+  .seating-studio .seating-header-actions { grid-column: 2; grid-row: 4; }
+  .seating-studio.seating-readonly .seating-header-actions { grid-column: 1; grid-row: 2; }
+}
+@media (max-width: 900px) {
+  .seating-studio .seating-layout { display: flex; flex-direction: column; height: auto; }
+  .seating-studio .seating-guests { max-height: 300px; }
+  .seating-studio .seating-workspace { height: 85dvh; min-height: 620px; grid-template-columns: 1fr; grid-template-rows: minmax(220px, 1fr) auto auto auto auto auto; }
+  .seating-studio .seating-tools { grid-column: 1; grid-row: 2; flex-wrap: wrap; }
+  .seating-studio .seating-outline-tools, .seating-studio .seating-outline-tools.editing { grid-column: 1; grid-row: 3; padding: 3px 9px; }
+  .seating-studio .seating-zoom { grid-column: 1; grid-row: 4; }
+  .seating-studio .seating-editor { grid-column: 1; grid-row: 5; max-height: 150px; }
+  .seating-studio .seating-header-actions, .seating-studio .seating-workspace:has(.seating-outline-tools.editing) .seating-header-actions { grid-column: 1; grid-row: 6; }
+  .seating-studio.seating-readonly .seating-workspace { grid-template-rows: minmax(220px, 1fr) auto auto; min-height: 480px; }
+  .seating-studio.seating-readonly .seating-zoom { grid-row: 2; }
+  .seating-studio.seating-readonly .seating-header-actions { grid-column: 1; grid-row: 3; }
+}
 @media print {
+  .seating-studio { display: block; }
   .tables-page { padding: 0; background: white; }
   .tables-nav, .seating-summary a { display: none !important; }
   .seating-studio .seating-layout { display: block; height: auto; }

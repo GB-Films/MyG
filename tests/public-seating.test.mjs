@@ -12,4 +12,8 @@ test('public seating shares names and layout without leaking private guest field
   assert.deepEqual(result.items, plan.items);
   assert.deepEqual(result.room_outline, plan.room_outline);
   assert.deepEqual(plan, before);
+  plan.items[0] = {...plan.items[0], shape:'rectangle', width:220, height:100, rotation:45};
+  plan.items.push({id:'door-1',kind:'door',name:'Entrada',capacity:0,x:2,y:30,width:100,height:70,rotation:90});
+  const transformed = publicSeatingPlan(plan);
+  assert.deepEqual(transformed.items, plan.items);
 });

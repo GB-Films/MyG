@@ -11,7 +11,7 @@ export function publicSeatingPlan(plan: Plan) {
   });
   return {
     version: plan.version,
-    items: plan.items.map(({ id, kind, name, capacity, x, y, movie, number }) => ({ id, kind, name, capacity, x, y, ...(movie ? { movie } : {}), ...(number ? { number } : {}) })),
+    items: plan.items.map(({ id, kind, name, capacity, x, y, movie, number, shape, width, height, rotation }) => ({ id, kind, name, capacity, x, y, ...(movie ? { movie } : {}), ...(number ? { number } : {}), ...(shape ? { shape } : {}), ...(width !== undefined ? { width } : {}), ...(height !== undefined ? { height } : {}), ...(rotation !== undefined ? { rotation } : {}) })),
     assignments, official_guests, guest_source: "official",
     manual_guests: [], couple_at_main: plan.couple_at_main,
     couple_in_roster: !!plan.couple_in_roster,
