@@ -134,6 +134,8 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   const [marquee, setMarquee] = useState<SelectionBox | null>(null);
   const [pendingDelete, setPendingDelete] = useState<RoomItem | null>(null);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
+  const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
+  const [guestDropTarget, setGuestDropTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [manualName, setManualName] = useState("");
   const [zoom, setZoom] = useState(1);
@@ -244,8 +246,8 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     if (readOnly) return;
     const keyboard = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || drawingOutline || pendingDelete || (event.target as Element)?.closest("input,textarea,select,[contenteditable=true]")) return;
-      if (event.key.toLowerCase() === "z") { event.preventDefault(); if (event.shiftKey) session.redo(); else session.undo(); }
-      else if (event.key.toLowerCase() === "y") { event.preventDefault(); session.redo(); }
+      if (event.key.toLowerCase() === "z") { event.preventDefault(); setStatus(""); if (event.shiftKey) session.redo(); else session.undo(); }
+      else if (event.key.toLowerCase() === "y") { event.preventDefault(); setStatus(""); session.redo(); }
     };
     window.addEventListener("keydown", keyboard);
     const online = () => { void session.flush(); };
@@ -270,20 +272,20 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   }
 
   function assignGuest(guestId: string, tableId: string | null) {
-    if (!fullEdit) return;
+    if (!fullEdit || !guestById.has(guestId)) return;
     const table = plan.items.find((item) => item.id === tableId);
     if (tableId && (!table || !["table", "main"].includes(table.kind))) return;
-    if (tableId && plan.assignments[guestId] !== tableId && Object.values(plan.assignments).filter((id) => id === tableId).length + reservedCoupleSeats(table!) >= table!.capacity) {
-      setStatus(`${table!.name} ya tiene ${table!.capacity} lugares ocupados.`);
-      return;
-    }
     updatePlan((current) => {
       const assignments = { ...current.assignments };
       if (tableId) assignments[guestId] = tableId;
       else delete assignments[guestId];
-      return { ...current, assignments };
+      const occupied = table ? Object.values(assignments).filter(id => id === tableId).length + reservedCoupleSeats(table) : 0;
+      const items = current.items.map(item => item.id === tableId && occupied > item.capacity ? { ...item, capacity: occupied } : item);
+      return { ...current, assignments, items };
     });
+    if (tableId) setSelectedItemId(tableId);
     setSelectedGuestId(null);
+    if (plan.assignments[guestId] !== tableId) setStatus(table ? `${guestById.get(guestId)!.name} pasó a la mesa ${tableDisplayName(table)}.` : `${guestById.get(guestId)!.name} quedó sin mesa.`);
   }
 
   function addItem(kind: ItemKind) {
@@ -429,9 +431,30 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     event.currentTarget.classList.remove("is-panning");
   }
 
+  function startGuestDrag(event: DragEvent<HTMLButtonElement>, guestId: string) {
+    if (!fullEdit || !guestById.has(guestId)) { event.preventDefault(); return; }
+    event.dataTransfer.setData("application/x-myg-guest", guestId);
+    event.dataTransfer.setData("text/plain", guestId);
+    event.dataTransfer.effectAllowed = "move";
+    setDraggedGuestId(guestId);
+    setGuestDropTarget(null);
+  }
+
+  function endGuestDrag() { setDraggedGuestId(null); setGuestDropTarget(null); }
+
+  function dragGuestOver(event: DragEvent<HTMLButtonElement>, item: RoomItem) {
+    if (!fullEdit || !draggedGuestId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setGuestDropTarget(item.id);
+  }
+
   function dropGuest(event: DragEvent<HTMLButtonElement>, item: RoomItem) {
     event.preventDefault();
-    const guestId = event.dataTransfer.getData("text/plain");
+    event.stopPropagation();
+    if (!fullEdit) return;
+    const guestId = event.dataTransfer.getData("application/x-myg-guest") || event.dataTransfer.getData("text/plain") || draggedGuestId || "";
+    endGuestDrag();
     if (guestById.has(guestId)) assignGuest(guestId, item.id);
   }
 
@@ -458,7 +481,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
           <div key={sidebarTables.map(table => table.id).join(",") || "all-guests"} className="seating-guest-list" tabIndex={0} aria-label={sidebarTables.length > 1 ? "Personas de las mesas seleccionadas" : sidebarTable ? "Personas de esta mesa" : "Lista de invitados"}>
             {visibleGuests.map((guest) => {
               const table = plan.items.find((item) => item.id === plan.assignments[guest.id]);
-              return <button key={guest.id} type="button" draggable={fullEdit} onDragStart={(event) => event.dataTransfer.setData("text/plain", guest.id)} onClick={() => { setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id); if (table) { setSelectedItemId(table.id); fitCanvas(); } }} className={selectedGuestId === guest.id ? "selected" : ""}>
+              return <button key={guest.id} type="button" draggable={fullEdit} onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} onClick={() => { setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id); if (table) { setSelectedItemId(table.id); fitCanvas(); } }} className={`${selectedGuestId === guest.id ? "selected" : ""}${draggedGuestId === guest.id ? " dragging" : ""}`}>
                 <span><strong>{guest.name}</strong>{fullEdit && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span>{!sidebarTable && <em>{table ? tableDisplayName(table) : "—"}</em>}
               </button>;
             })}
@@ -483,13 +506,13 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
                     const isTable = item.kind === "table" || item.kind === "main";
                     const occupied = people.length + reservedCoupleSeats(item);
                     const geometry = itemGeometry(item);
-                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemIds.includes(item.id) ? " active" : ""}${fullEdit && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={event => clickItem(item, event.shiftKey)} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onLostPointerCapture={onItemPointerUp} onDragOver={fullEdit && isTable ? (event) => event.preventDefault() : undefined} onDrop={fullEdit && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}>
+                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemIds.includes(item.id) ? " active" : ""}${fullEdit && (selectedGuestId || draggedGuestId) && isTable ? " target" : ""}${guestDropTarget === item.id ? " guest-drop-target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={event => clickItem(item, event.shiftKey)} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onLostPointerCapture={onItemPointerUp} onDragOver={fullEdit && isTable ? event => dragGuestOver(event, item) : undefined} onDragLeave={fullEdit && isTable ? event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGuestDropTarget(null); } : undefined} onDrop={fullEdit && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}>
                       {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => <i key={index} className={index < occupied ? "filled" : ""} style={seatPosition(index, item.capacity, geometry)} />)}</span>}
                       {item.kind === "door" && <svg className="seating-door-symbol" viewBox="0 -100 100 200" aria-hidden="true"><path d="M0 0 H100" stroke="#10100f" strokeWidth="9" /><path d="M0 0 V100 M0 100 A100 100 0 0 0 100 0" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M0 -5 V5 M100 -5 V5" stroke="currentColor" strokeWidth="4" /></svg>}
                       <span className="seating-item-label" style={{ transform: `rotate(${-geometry.rotation}deg)` }}>{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{isTable && tableTitle(item) && <span className="seating-movie">{tableTitle(item)}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
                     </button>;
                   })}
-                  {fullEdit && !editing && !selectedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; if (active) session.beginGesture(); else session.endGesture(); }} />}
+                  {fullEdit && !editing && !selectedGuestId && !draggedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; if (active) session.beginGesture(); else session.endGesture(); }} />}
                 </div>
               </div>
               </div>
@@ -502,7 +525,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
               {["table", "main"].includes(selectedItem.kind) && <>
                 <label>Número de mesa<DimensionInput key={`${selectedItem.id}:number`} label="Número de mesa" min={1} max={999} value={tableNumber(selectedItem)} onCommit={number => updateItem(selectedItem.id, { number: Math.round(number) })} /></label>
                 {fullEdit && <><label>Nombre de la mesa<input aria-label="Nombre de la mesa" placeholder="Película o nombre" value={tableTitle(selectedItem)} maxLength={80} onChange={event => updateItem(selectedItem.id, { movie: event.target.value })} /></label>
-                <label>Lugares<DimensionInput key={`${selectedItem.id}:capacity`} label="Lugares de la mesa" min={1} max={24} value={selectedItem.capacity} onCommit={(capacity) => {
+                <label>Lugares<DimensionInput key={`${selectedItem.id}:capacity`} label="Lugares de la mesa" min={1} max={Math.max(24, selectedItem.capacity)} value={selectedItem.capacity} onCommit={(capacity) => {
                   const occupied = Object.values(plan.assignments).filter((id) => id === selectedItem.id).length + reservedCoupleSeats(selectedItem);
                   if (Math.round(capacity) >= occupied) updateItem(selectedItem.id, { capacity: Math.round(capacity) });
                 }} /></label></>}
@@ -522,8 +545,8 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
           </div>}
         <div className="seating-header-actions">
           {!readOnly && <><span className="seating-save-state" aria-live="polite">{loadFailed ? "No se pudo cargar" : saveError ? "Guardado pendiente" : saving ? "Guardando…" : drawingOutline ? "Contorno en edición" : dirty ? "Guardado automático pendiente…" : "Todo guardado"}</span>
-          <button className="seating-secondary seating-icon-button" type="button" aria-label="Deshacer" title="Deshacer · Ctrl+Z" disabled={!canUndo || drawingOutline} onClick={session.undo}><Undo2 size={18} /></button>
-          <button className="seating-secondary seating-icon-button" type="button" aria-label="Rehacer" title="Rehacer · Ctrl+Shift+Z" disabled={!canRedo || drawingOutline} onClick={session.redo}><Redo2 size={18} /></button></>}
+          <button className="seating-secondary seating-icon-button" type="button" aria-label="Deshacer" title="Deshacer · Ctrl+Z" disabled={!canUndo || drawingOutline} onClick={() => { setStatus(""); session.undo(); }}><Undo2 size={18} /></button>
+          <button className="seating-secondary seating-icon-button" type="button" aria-label="Rehacer" title="Rehacer · Ctrl+Shift+Z" disabled={!canRedo || drawingOutline} onClick={() => { setStatus(""); session.redo(); }}><Redo2 size={18} /></button></>}
           <button type="button" className="seating-secondary seating-icon-button" aria-label="Copiar enlace" title="Copiar enlace de las mesas" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}><LinkIcon size={18} /></button>
           <button type="button" className="seating-secondary seating-icon-button" aria-label="Descargar plano PNG" title="Descargar el plano completo en PNG" disabled={loading || loadFailed || drawingOutline || exporting} onClick={async () => { setExporting(true); try { await downloadSeatingPng(plan); setStatus("Plano descargado en PNG."); } catch { setStatus("No se pudo generar el PNG. Volvé a intentarlo."); } finally { setExporting(false); } }}><Download size={18} /></button>
         </div>

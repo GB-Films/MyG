@@ -47,6 +47,9 @@
 .seating-studio .seating-item { background: #191918; color: #f5f2eb; border-color: #f5f2eb; width: 104px; height: 104px; }
 .seating-studio .seating-item.active { outline: 4px solid #f40009; outline-offset: 8px; box-shadow: 0 0 0 14px #f4000933; }
 .seating-studio .seating-item.target { box-shadow: 0 0 0 8px #f4000960; }
+.seating-studio .seating-item.guest-drop-target { outline: 3px dashed #fff; outline-offset: 8px; box-shadow: 0 0 0 14px #f4000960; }
+.seating-studio .seating-guest-list > button[draggable=true] { cursor: grab; }
+.seating-studio .seating-guest-list > button.dragging { opacity: .45; cursor: grabbing; }
 .seating-studio .seating-item-label strong.seating-table-number { font-size: 34px; }
 .seating-studio .seating-item-label small, .seating-studio .seating-item-label em { color: #bcbcbc; }
 .seating-studio .seating-seats i { width: 13px; height: 13px; border-color: #bbb; background: #10100f; }
