@@ -13,9 +13,6 @@ export async function downloadSeatingPng(plan: Plan) {
   for (let y = 0; y < h; y += 36) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
   const points = plan.room_outline?.points;
   if (points?.length) {
-    const outside = new Path2D(); outside.rect(0,0,w,h); outside.moveTo(points[0].x*w/100,points[0].y*h/100);
-    points.slice(1).forEach(p=>outside.lineTo(p.x*w/100,p.y*h/100)); outside.closePath();
-    ctx.fillStyle="#0008";ctx.fill(outside,"evenodd");
     ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x*w/100,p.y*h/100):ctx.moveTo(p.x*w/100,p.y*h/100));ctx.closePath();ctx.strokeStyle="#f5f2eb";ctx.lineWidth=3;ctx.stroke();
   }
   const guests = plan.guest_source === "official" ? plan.official_guests || [] : plan.manual_guests;

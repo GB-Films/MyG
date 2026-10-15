@@ -42,8 +42,8 @@
 .seating-pan-hint { margin-left: auto; color: #aaa; font-size: 11px; }
 .seating-studio .seating-canvas { flex: 1; min-height: 220px; max-height: none; border: 0; background: #0d0d0d; overflow: auto; overscroll-behavior: contain; touch-action: none; cursor: grab; scrollbar-width: thin; scrollbar-color: #555 #111; }
 .seating-canvas:active { cursor: grabbing; }
-.seating-canvas-center { display: flex; padding: 16px; min-width: 100%; min-height: 100%; width: max-content; height: max-content; }
-.seating-scaled-frame { flex: none; margin: auto; }
+.seating-canvas-center { position: absolute; inset: 0; }
+.seating-scaled-frame { position: absolute; left: 50%; top: 50%; margin: 0; }
 .seating-studio .seating-stage { background-color: #10100f; border: 1px solid #555; background-image: linear-gradient(#ffffff0a 1px, transparent 1px), linear-gradient(90deg, #ffffff0a 1px, transparent 1px); }
 .seating-studio .seating-item { background: #191918; color: #f5f2eb; border-color: #f5f2eb; width: 104px; height: 104px; }
 .seating-studio .seating-item.active { outline: 4px solid #f40009; outline-offset: 8px; box-shadow: 0 0 0 14px #f4000933; }
@@ -120,7 +120,7 @@
   .seating-studio .seating-roster-heading, .seating-studio .seating-roster { grid-column: 1 / -1; }
 }
 .seating-studio .seating-workspace { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: minmax(220px, 1fr) auto auto; }
-.seating-studio .seating-canvas { grid-column: 1 / -1; grid-row: 1; background-color: #10100f; background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px); background-size: 36px 36px; }
+.seating-studio .seating-canvas { position: relative; overflow: hidden; grid-column: 1 / -1; grid-row: 1; background-color: #10100f; background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px); background-size: 36px 36px; }
 .seating-studio .seating-stage { border: 0; background: transparent; }
 .seating-studio .seating-tools { grid-column: 1; grid-row: 2; padding: 9px; gap: 5px; flex-wrap: nowrap; }
 .seating-studio .seating-tools > span { display: none; }

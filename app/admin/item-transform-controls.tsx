@@ -8,7 +8,7 @@ const corners: { name: string; direction: [number, number] }[] = [
   { name: "inferior derecha", direction: [1, 1] }, { name: "inferior izquierda", direction: [-1, 1] },
 ];
 
-export function ItemTransformControls({ item, zoom, canvasWidth, canvasHeight, onChange, onGesture }: {
+export function ItemTransformControls({ item, canvasWidth, canvasHeight, onChange, onGesture }: {
   item: RoomItem; zoom: number; canvasWidth: number; canvasHeight: number;
   onChange: (id: string, patch: Partial<RoomItem>) => void;
   onGesture: (active: boolean) => void;
@@ -17,8 +17,9 @@ export function ItemTransformControls({ item, zoom, canvasWidth, canvasHeight, o
   const gesture = useRef<{ item: RoomItem; startX: number; startY: number; angle: number; corner?: [number, number] } | null>(null);
   const g = itemGeometry(item);
   const handles = item.kind === "door" ? [{ name: "izquierda de la puerta", direction: [-1, 0] as [number, number] }, { name: "derecha de la puerta", direction: [1, 0] as [number, number] }] : corners;
-  const controlSize = 24 / zoom;
-  const rotationBelow = item.y / 100 * canvasHeight - Math.hypot(g.width, g.height) / 2 < 48 / zoom;
+  // All selection geometry scales with the furniture, including its handles.
+  const controlSize = 14;
+  const rotationBelow = item.y / 100 * canvasHeight - Math.hypot(g.width, g.height) / 2 < 48;
 
   function point(event: PointerEvent<HTMLButtonElement>) {
     const rect = layer.current!.parentElement!.getBoundingClientRect();
@@ -56,8 +57,8 @@ export function ItemTransformControls({ item, zoom, canvasWidth, canvasHeight, o
       const dy = event.key === "ArrowDown" ? step : event.key === "ArrowUp" ? -step : 0;
       onChange(item.id, resizeFromCorner(item, direction, dx, dy, canvasWidth, canvasHeight));
     }} />)}
-    {item.kind !== "door" && <><span className="seating-rotation-stem" style={{ height: 32 / zoom, top: rotationBelow ? g.height : -32 / zoom }} />
-    <button type="button" className="seating-rotation-handle" aria-label="Girar elemento arrastrando" title="Arrastrá para girar · Shift: pasos de 15°" style={{ top: rotationBelow ? g.height + 32 / zoom : -32 / zoom, width: controlSize, height: controlSize, fontSize: 17 / zoom }} onPointerDown={event => start(event)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onClick={event => event.stopPropagation()} onKeyDown={event => {
+    {item.kind !== "door" && <><span className="seating-rotation-stem" style={{ height: 24, top: rotationBelow ? g.height : -24 }} />
+    <button type="button" className="seating-rotation-handle" aria-label="Girar elemento arrastrando" title="Arrastrá para girar · Shift: pasos de 15°" style={{ top: rotationBelow ? g.height + 24 : -24, width: 20, height: 20, fontSize: 14 }} onPointerDown={event => start(event)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onClick={event => event.stopPropagation()} onKeyDown={event => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault(); onChange(item.id, { rotation: (g.rotation + (event.key === "ArrowLeft" ? -1 : 1) * (event.shiftKey ? 15 : 1) + 360) % 360 });
     }}>↻</button></>}

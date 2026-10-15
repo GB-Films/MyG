@@ -172,7 +172,6 @@ export function RoomOutlineEditor({ outline, disabled, readOnly = false, zoom, o
     }}
     onPointerCancel={() => { pointer.current = null; }}>
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      {shown.closed && shown.points.length >= 3 && <path className="seating-outline-outside" fillRule="evenodd" d={`M0,0 H100 V100 H0 Z M${shown.points.map((p) => `${p.x},${p.y}`).join(" L")} Z`} />}
       {shown.closed && shown.points.length >= 3 ? <polygon className="seating-outline-wall" points={pointString} vectorEffect="non-scaling-stroke" /> : <polyline className="seating-outline-wall draft" points={pointString} vectorEffect="non-scaling-stroke" />}
     </svg>
     {mode === "edit" && draft.closed && <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="seating-outline-edges">

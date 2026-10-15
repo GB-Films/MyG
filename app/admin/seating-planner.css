@@ -108,7 +108,6 @@
 .seating-outline-layer > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .seating-outline-wall { stroke: #f5f2eb; stroke-width: 3px; fill: #ffffff03; stroke-linejoin: round; }
 .seating-outline-wall.draft { stroke-dasharray: 7 5; fill: none; }
-.seating-outline-outside { fill: #0008; }
 .seating-outline-edges line { stroke: transparent; stroke-width: 18px; cursor: copy; }
 .seating-outline-edges line:hover, .seating-outline-edges line:focus { stroke: #f4000970; }
 .seating-stage.outline-editing { overflow: visible; }
