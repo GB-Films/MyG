@@ -11,7 +11,7 @@ import { itemGeometry, seatPosition, tableNumber, tableTitle, type ItemKind, typ
 import { ItemTransformControls } from "./item-transform-controls";
 import { PlanConflictError, PlanSession } from "./plan-session";
 import { downloadSeatingPng } from "./export-seating-png";
-import { Download, Link as LinkIcon, Undo2, Redo2, Scan, Trash2 } from "lucide-react";
+import { Download, Link as LinkIcon, Undo2, Redo2, Scan, Trash2, ArrowLeft } from "lucide-react";
 import { applyRoomOutline, DEFAULT_OUTLINE, snapDoor, withRoomDefaults } from "./room-geometry";
 import { DimensionInput } from "./dimension-input";
 import { DeleteRoomItemDialog } from "./delete-room-item-dialog";
@@ -148,11 +148,12 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   const guests = useMemo(() => officialRoster ? plan.official_guests || [] : [...rsvpGuests, ...plan.manual_guests], [officialRoster, plan.official_guests, rsvpGuests, plan.manual_guests]);
   const guestById = useMemo(() => new Map(guests.map((guest) => [guest.id, guest])), [guests]);
   const selectedItem = plan.items.find((item) => item.id === selectedItemId);
+  const sidebarTable = selectedItem && ["table", "main"].includes(selectedItem.kind) ? selectedItem : null;
   const selectedGeometry = selectedItem ? itemGeometry(selectedItem) : null;
   const assignedCount = guests.filter((guest) => plan.assignments[guest.id] && plan.items.some((item) => item.id === plan.assignments[guest.id])).length;
   const orphanedAssignments = Object.keys(plan.assignments).filter((id) => !guestById.has(id)).length;
   const normalizeSearch = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es");
-  const visibleGuests = guests.filter((guest) => normalizeSearch(`${guest.name} ${guest.group || ""} ${guest.dietary || ""}`).includes(normalizeSearch(search)));
+  const visibleGuests = sidebarTable ? guests.filter(guest => plan.assignments[guest.id] === sidebarTable.id) : guests.filter((guest) => normalizeSearch(`${guest.name} ${guest.group || ""} ${guest.dietary || ""}`).includes(normalizeSearch(search)));
   const reservedCoupleSeats = (item: RoomItem) => item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster ? 2 : 0;
   const canvasWidth = plan.canvas?.width || 1400;
   const canvasHeight = plan.canvas?.height || 1050;
@@ -226,7 +227,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     const keyboard = (event: KeyboardEvent) => {
       if (pendingDelete || drawingOutline || event.ctrlKey || event.metaKey || event.altKey || (event.target as Element)?.closest("input:not([type=range]),textarea,select,[contenteditable=true]")) return;
       if (event.key.toLowerCase() === "h") { event.preventDefault(); fitCanvas(); }
-      if (event.key === "Escape") { setSelectedItemId(""); setSelectedGuestId(null); }
+      if (event.key === "Escape") { setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }
     };
     window.addEventListener("keydown", keyboard);
     return () => window.removeEventListener("keydown", keyboard);
@@ -360,7 +361,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   function endPan(event: PointerEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return;
     if (pan.current && event.type === "pointerup") setCamera({ x: pan.current.left + event.clientX - pan.current.x, y: pan.current.top + event.clientY - pan.current.y });
-    if (pan.current?.deselect && event.type === "pointerup" && Math.hypot(event.clientX - pan.current.x, event.clientY - pan.current.y) < 4) { setSelectedItemId(""); setSelectedGuestId(null); }
+    if (pan.current?.deselect && event.type === "pointerup" && Math.hypot(event.clientX - pan.current.x, event.clientY - pan.current.y) < 4) { setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }
     pan.current = null;
     event.currentTarget.classList.remove("is-panning");
   }
@@ -383,21 +384,25 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
       {!loading && !loadFailed && <>
       <div className="seating-summary"><span><strong>{plan.items.filter(i => i.kind === "table" || i.kind === "main").length}</strong> mesas</span><span><strong>{guests.length}</strong> personas</span><span><strong>{assignedCount}</strong> ubicados</span>{guests.length !== assignedCount && <span>{guests.length - assignedCount} sin mesa</span>}{!readOnly && orphanedAssignments > 0 && <span>{orphanedAssignments} asignaciones para revisar</span>}<a href="#listado-mesas">Ver todas las listas ↓</a></div>
       <fieldset className="seating-layout">
-        <aside className="seating-guests">
-          <div className="seating-sidebar-heading"><h3>Invitados</h3><span>{guests.length}</span></div>
-          <input aria-label="Buscar invitados" placeholder="Buscar por nombre…" value={search} onChange={(event) => setSearch(event.target.value)} />
-          <div className="seating-guest-list">
+        <aside className="seating-guests" aria-label={sidebarTable ? `Invitados de la mesa ${tableDisplayName(sidebarTable)}` : "Todos los invitados"}>
+          <div className="seating-sidebar-heading">
+            <h3>{sidebarTable ? `Mesa ${tableDisplayName(sidebarTable)}` : "Invitados"}</h3><span>{sidebarTable ? visibleGuests.length : guests.length}</span>
+          </div>
+          {sidebarTable ? <div className="seating-sidebar-table-heading">
+            {tableTitle(sidebarTable) && <p>{tableTitle(sidebarTable)}</p>}
+            <button type="button" className="seating-all-guests" onClick={() => { setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }}><ArrowLeft size={14} />Todos los invitados</button>
+          </div> : <input aria-label="Buscar invitados" placeholder="Buscar por nombre…" value={search} onChange={(event) => setSearch(event.target.value)} />}
+          <div key={sidebarTable?.id || "all-guests"} className="seating-guest-list" tabIndex={0} aria-label={sidebarTable ? "Personas de esta mesa" : "Lista de invitados"}>
             {visibleGuests.map((guest) => {
               const table = plan.items.find((item) => item.id === plan.assignments[guest.id]);
               return <button key={guest.id} type="button" draggable={fullEdit} onDragStart={(event) => event.dataTransfer.setData("text/plain", guest.id)} onClick={() => { setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id); if (table) { setSelectedItemId(table.id); fitCanvas(); } }} className={selectedGuestId === guest.id ? "selected" : ""}>
-                <span><strong>{guest.name}</strong>{fullEdit && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span><em>{table ? tableDisplayName(table) : "—"}</em>
+                <span><strong>{guest.name}</strong>{fullEdit && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span>{!sidebarTable && <em>{table ? tableDisplayName(table) : "—"}</em>}
               </button>;
             })}
-            {!visibleGuests.length && <p className="seating-no-results">No encontramos ese nombre.</p>}
+            {!visibleGuests.length && <p className="seating-no-results">{sidebarTable ? "Esta mesa todavía no tiene invitados asignados." : "No encontramos ese nombre."}</p>}
           </div>
           {fullEdit && selectedGuestId && <div className="seating-guest-actions"><span>Elegí una mesa para ubicar a {guestById.get(selectedGuestId)?.name}.</span><button type="button" onClick={() => assignGuest(selectedGuestId, null)}>Dejar sin mesa</button><button type="button" onClick={() => setSelectedGuestId(null)}>Cancelar selección</button></div>}
           {fullEdit && !officialRoster && <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}><label htmlFor="seating-new-guest">Agregar persona pendiente</label><div><input id="seating-new-guest" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="Nombre y apellido" maxLength={120} /><button type="submit">Agregar</button></div></form>}
-          {(readOnly || sharedEdit) && selectedItem && ["table", "main"].includes(selectedItem.kind) && <div className="seating-table-preview"><small>Mesa seleccionada</small><h3>{tableDisplayName(selectedItem)} <span>{tableTitle(selectedItem)}</span></h3><ul>{guests.filter(g => plan.assignments[g.id] === selectedItem.id).map(g => <li key={g.id} className={g.id === selectedGuestId ? "highlighted" : ""}>{g.name}</li>)}</ul></div>}
         </aside>
         <div className="seating-workspace">
           {fullEdit && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button><button type="button" onClick={() => addItem("door")}>+ Puerta</button></div>}

@@ -24,7 +24,7 @@
 .seating-sidebar-heading span { font-size: 12px; color: #aaa; }
 .seating-studio .seating-guests h3 { font: 600 17px Arial, sans-serif; }
 .seating-studio .seating-guests input { border-radius: 3px; background: #10100f; border-color: #555; font-size: 13px; }
-.seating-studio .seating-guest-list { flex: 1; min-height: 90px; max-height: none; scrollbar-width: thin; }
+.seating-studio .seating-guest-list { flex: 1; min-height: 90px; max-height: none; }
 .seating-studio .seating-guest-list > button { padding: 11px 5px; border-color: #383838; }
 .seating-studio .seating-guest-list > button:hover, .seating-studio .seating-guest-list > button.selected { background: #361114; }
 .seating-studio .seating-guest-list em { color: #ffffff; background: #3b1215; min-width: 28px; padding: 5px; border-radius: 5px; text-align: center; font-weight: 700; }
@@ -42,7 +42,7 @@
 .seating-zoom-controls output { min-width: 38px; color: #ccc; font-size: 11px; }
 .seating-studio .seating-zoom input { width: 85px; accent-color: #f40009; }
 .seating-pan-hint { margin-left: auto; color: #aaa; font-size: 11px; }
-.seating-studio .seating-canvas { flex: 1; min-height: 220px; max-height: none; border: 0; background: #0d0d0d; overflow: auto; overscroll-behavior: contain; touch-action: none; cursor: grab; scrollbar-width: thin; scrollbar-color: #555 #111; }
+.seating-studio .seating-canvas { flex: 1; min-height: 220px; max-height: none; border: 0; background: #0d0d0d; overflow: auto; overscroll-behavior: contain; touch-action: none; cursor: grab; scrollbar-width: none; }
 .seating-canvas:active { cursor: grabbing; }
 .seating-canvas-center { position: absolute; inset: 0; }
 .seating-scaled-frame { position: absolute; left: 50%; top: 50%; margin: 0; }
@@ -60,11 +60,12 @@
 .seating-studio .seating-dance small, .seating-studio .seating-dj small { color: #ccc; }
 .seating-readonly .seating-item { cursor: pointer !important; }
 .seating-studio .seating-editor { border-radius: 8px; background: #191918; border-color: #383838; }
-.seating-table-preview { border-top: 1px solid #444; padding-top: 14px; margin-top: 12px; max-height: 45%; overflow: auto; }
-.seating-table-preview small { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #bbb; }
-.seating-table-preview h3 { margin: 8px 0 !important; font-size: 28px !important; }
-.seating-table-preview h3 span { display: block; font: italic 14px Georgia, serif; margin-top: 5px; }
-.seating-table-preview ul { list-style: none; padding: 0; margin: 0; font-size: 12px; line-height: 1.9; }
+.seating-sidebar-table-heading { flex: none; }
+.seating-sidebar-table-heading p { margin: 0 0 14px; color: #ccc; font: italic 17px/1.4 Georgia, serif; }
+.seating-all-guests { display: inline-flex; align-items: center; gap: 7px; padding: 7px 0; border: 0; background: transparent; color: #ccc; font-size: 11px !important; cursor: pointer; }
+.seating-all-guests:hover { color: #fff; }
+.seating-studio, .seating-studio *, .tables-page, html:has(.tables-page), body:has(.tables-page) { scrollbar-width: none; -ms-overflow-style: none; }
+.seating-studio::-webkit-scrollbar, .seating-studio *::-webkit-scrollbar, .tables-page::-webkit-scrollbar, html:has(.tables-page)::-webkit-scrollbar, body:has(.tables-page)::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .highlighted { color: #ffffff; font-weight: 700; text-decoration: underline; text-decoration-color: #f40009; text-underline-offset: 4px; }
 .seating-studio button:focus-visible, .seating-studio input:focus-visible, .seating-studio select:focus-visible { outline: 2px solid #f40009; outline-offset: 3px; }
 .seating-studio .seating-tools button:hover, .seating-studio .seating-header-actions button:hover:not(:disabled), .seating-studio .seating-zoom button:hover { background: #f40009; border-color: #f40009; color: #fff; }
@@ -98,7 +99,6 @@
   .seating-studio .seating-layout { display: flex; flex-direction: column; height: auto; }
   .seating-studio .seating-guests { max-height: 360px; }
   .seating-studio .seating-guest-list { max-height: 135px; flex: auto; }
-  .seating-table-preview { max-height: 150px; flex-shrink: 0; }
   .seating-studio .seating-workspace { height: 70dvh; min-height: 480px; }
   .seating-studio .seating-zoom { gap: 7px; padding: 8px; }
   .seating-studio .seating-zoom input { width: 65px; }
