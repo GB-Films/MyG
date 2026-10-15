@@ -113,6 +113,13 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    // Shared projection contains only the room layout and guest names.
+    match /public_seating/{documentId} {
+      allow get: if documentId == 'main';
+      allow list: if false;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /gift_confirmations/{documentId} {
       allow create: if (request.auth == null || isAdmin())
         && request.resource.data.keys().hasOnly([

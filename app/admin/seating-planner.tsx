@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent } from "react";
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, runTransaction } from "firebase/firestore";
 import { firestore } from "../firebase";
 import { RoomOutlineEditor, type RoomOutline } from "./room-outline-editor";
 import "./seating-planner.css";
+import { publicSeatingPlan } from "./public-seating";
 
 type RsvpSource = {
   id: string;
@@ -19,7 +20,7 @@ type RsvpSource = {
 type Guest = { id: string; name: string; dietary: string; group: string; manual?: boolean; source_row?: number };
 type ItemKind = "table" | "main" | "couple" | "dance" | "dj";
 type RoomItem = { id: string; kind: ItemKind; name: string; capacity: number; x: number; y: number; movie?: string; number?: number };
-type Plan = {
+export type Plan = {
   version: number;
   items: RoomItem[];
   assignments: Record<string, string>;
@@ -50,6 +51,7 @@ const DEFAULT_PLAN: Plan = {
 };
 
 const planRef = doc(firestore, "seating_plans", "main");
+const publicPlanRef = doc(firestore, "public_seating", "main");
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 function guestsFromRsvps(rsvps: RsvpSource[]): Guest[] {
@@ -81,7 +83,7 @@ function tableDisplayName(item: RoomItem) {
   return item.name.trim().replace(/^Mesa(?:\s+|(?=\d))/i, "").trim() || String(item.number || "");
 }
 
-export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
+export function SeatingPlanner({ rsvps, readOnly = false }: { rsvps: RsvpSource[]; readOnly?: boolean }) {
   const [plan, setPlan] = useState<Plan>(DEFAULT_PLAN);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -95,6 +97,8 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   const [zoom, setZoom] = useState(1);
   const [drawingOutline, setDrawingOutline] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const fitMode = useRef(true);
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const drag = useRef<{ id: string; x: number; y: number; startX: number; startY: number } | null>(null);
 
   const rsvpGuests = useMemo(() => guestsFromRsvps(rsvps), [rsvps]);
@@ -104,22 +108,55 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   const selectedItem = plan.items.find((item) => item.id === selectedItemId);
   const assignedCount = guests.filter((guest) => plan.assignments[guest.id] && plan.items.some((item) => item.id === plan.assignments[guest.id])).length;
   const orphanedAssignments = Object.keys(plan.assignments).filter((id) => !guestById.has(id)).length;
-  const visibleGuests = guests.filter((guest) => `${guest.name} ${guest.group} ${guest.dietary}`.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es")));
+  const normalizeSearch = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es");
+  const visibleGuests = guests.filter((guest) => normalizeSearch(`${guest.name} ${guest.group || ""} ${guest.dietary || ""}`).includes(normalizeSearch(search)));
   const reservedCoupleSeats = (item: RoomItem) => item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster ? 2 : 0;
-  const canvasWidth = plan.canvas?.width || 0;
-  const canvasHeight = plan.canvas?.height || 0;
+  const canvasWidth = plan.canvas?.width || 1400;
+  const canvasHeight = plan.canvas?.height || 1050;
+
+  function fitCanvas() {
+    const container = canvasRef.current;
+    if (!container) return;
+    fitMode.current = true;
+    setZoom(Math.min((container.clientWidth - 32) / canvasWidth, (container.clientHeight - 32) / canvasHeight, 1.5));
+    container.scrollTo(0, 0);
+  }
+
+  function changeZoom(next: number) {
+    const container = canvasRef.current;
+    if (!container) return;
+    const bounded = clamp(next, .15, 2);
+    const centerX = (container.scrollLeft + container.clientWidth / 2 - Math.max(16, (container.clientWidth - canvasWidth * zoom) / 2)) / zoom;
+    const centerY = (container.scrollTop + container.clientHeight / 2 - Math.max(16, (container.clientHeight - canvasHeight * zoom) / 2)) / zoom;
+    fitMode.current = false;
+    setZoom(bounded);
+    requestAnimationFrame(() => container.scrollTo(
+      centerX * bounded + Math.max(16, (container.clientWidth - canvasWidth * bounded) / 2) - container.clientWidth / 2,
+      centerY * bounded + Math.max(16, (container.clientHeight - canvasHeight * bounded) / 2) - container.clientHeight / 2,
+    ));
+  }
 
   useEffect(() => {
     if (!canvasWidth || !canvasRef.current) return;
     const container = canvasRef.current;
-    const fit = () => setZoom(Math.min(1, (container.clientWidth - 2) / canvasWidth));
+    const fit = () => { if (fitMode.current) setZoom(Math.min((container.clientWidth - 32) / canvasWidth, (container.clientHeight - 32) / canvasHeight, 1.5)); };
     const observer = new ResizeObserver(fit);
     observer.observe(container);
     fit();
     return () => observer.disconnect();
-  }, [canvasWidth]);
+  }, [canvasWidth, canvasHeight, loading]);
 
   useEffect(() => {
+    if (readOnly) return onSnapshot(publicPlanRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        setStatus("El plano todavía no está publicado. Volvé a visitar este enlace en unos minutos.");
+        setLoadFailed(true);
+      } else {
+        setPlan(snapshot.data() as Plan);
+        setLoadFailed(false);
+      }
+      setLoading(false);
+    }, () => { setStatus("No pudimos cargar el plano. Revisá tu conexión y recargá la página."); setLoadFailed(true); setLoading(false); });
     getDoc(planRef).then((snapshot) => {
       if (snapshot.exists()) {
         const saved = snapshot.data() as Plan;
@@ -133,7 +170,7 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
       setLoadFailed(true);
       setLoading(false);
     });
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => {
     if (!dirty && !drawingOutline) return;
@@ -146,6 +183,7 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   }, [dirty, drawingOutline]);
 
   function updatePlan(updater: (current: Plan) => Plan) {
+    if (readOnly) return;
     setPlan(updater);
     setDirty(true);
     setStatus("");
@@ -204,6 +242,7 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   }
 
   function onItemPointerDown(event: PointerEvent<HTMLButtonElement>, item: RoomItem) {
+    if (readOnly) return;
     if (selectedGuestId && ["table", "main"].includes(item.kind)) return;
     const stage = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!stage) return;
@@ -229,7 +268,7 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
   }
 
   async function save() {
-    if (loadFailed || drawingOutline) return;
+    if (readOnly || loadFailed || drawingOutline) return;
     setSaving(true);
     setStatus("");
     try {
@@ -237,12 +276,14 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
         const current = await transaction.get(planRef);
         const version = Number(current.data()?.version || 0);
         if (version !== plan.version) throw new Error("El plano cambió en otra sesión. Recargá la página antes de guardar para evitar reemplazar esos cambios.");
-        transaction.set(planRef, { ...plan, version: version + 1, updated_at: new Date().toISOString() });
+        const nextPlan = { ...plan, version: version + 1, updated_at: new Date().toISOString() };
+        transaction.set(planRef, nextPlan);
+        transaction.set(publicPlanRef, publicSeatingPlan(nextPlan));
         return version + 1;
       });
       setPlan((current) => ({ ...current, version: nextVersion }));
       setDirty(false);
-      setStatus("Plano guardado para el panel privado.");
+      setStatus("Plano guardado. El enlace compartido ya está actualizado.");
     } catch (error) {
       setStatus(error instanceof Error && error.message.startsWith("El plano cambió") ? error.message : "No se pudo guardar el plano. Revisá la conexión y volvé a intentarlo.");
     } finally {
@@ -250,62 +291,66 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
     }
   }
 
+
   return (
-    <section className="seating" id="mesas" aria-label="Organizador de mesas">
+    <section className={`seating seating-studio${readOnly ? " seating-readonly" : ""}`} id="mesas" aria-label="Organizador de mesas">
       <header className="seating-heading">
-        <div><p className="seating-kicker">Plano del salón</p><h2>Organizá las mesas.</h2><p>Arrastrá muebles en el plano. Para asignar a alguien, arrastrá su nombre a una mesa o tocá primero su nombre y después la mesa.</p></div>
-        <div className="seating-header-actions"><span aria-live="polite">{loadFailed ? "No se pudo cargar" : drawingOutline ? "Aplicá el contorno para guardar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || drawingOutline || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button><button type="button" className="seating-secondary" disabled={drawingOutline} onClick={() => window.print()}>Imprimir plano</button></div>
+        <div><p className="seating-kicker">María & Guido · 21.11.2026</p><h2>{readOnly ? "Encontrá tu lugar." : "Diseñá el salón."}</h2><p>{readOnly ? "Buscá tu nombre o elegí una mesa para ver quiénes la comparten." : "Mové las mesas, dibujá el salón y distribuí a tus invitados."}</p></div>
+        <div className="seating-header-actions">
+          {!readOnly && <><span aria-live="polite">{loadFailed ? "No se pudo cargar" : drawingOutline ? "Aplicá el contorno para guardar" : dirty ? "Cambios sin guardar" : "Todo guardado"}</span><button type="button" onClick={save} disabled={loading || loadFailed || saving || drawingOutline || !dirty}>{saving ? "Guardando…" : "Guardar plano"}</button></>}
+          <button type="button" className="seating-secondary" onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/mesas/`); setStatus("Enlace copiado para compartir."); } catch { setStatus(`Compartí este enlace: ${window.location.origin}/mesas/`); } }}>Compartir</button>
+          <button type="button" className="seating-secondary" disabled={drawingOutline} onClick={() => window.print()}>Imprimir</button>
+        </div>
       </header>
       {status && <p className="seating-status" role="status">{status}</p>}
-      {officialRoster && plan.source && <p className="seating-source">Lista oficial: <a href={plan.source.url} target="_blank" rel="noreferrer">{plan.source.title}</a>. Los nombres y el total provienen de la planilla; las confirmaciones de la web no agregan personas a este plano.</p>}
-      <div className="seating-summary"><strong>{guests.length}</strong> {officialRoster ? "personas en la lista oficial" : "invitados que vienen"} · <strong>{assignedCount}</strong> ubicados · <strong>{guests.length - assignedCount}</strong> sin mesa {orphanedAssignments > 0 && <span>· {orphanedAssignments} asignaciones antiguas para revisar</span>}</div>
-      <fieldset className="seating-layout" disabled={loading || loadFailed || saving}>
+      {loading && <p role="status">Cargando plano…</p>}
+      {!loading && !loadFailed && <>
+      <div className="seating-summary"><span><strong>{plan.items.filter(i => i.kind === "table" || i.kind === "main").length}</strong> mesas</span><span><strong>{guests.length}</strong> personas</span><span><strong>{assignedCount}</strong> ubicados</span>{guests.length !== assignedCount && <span>{guests.length - assignedCount} sin mesa</span>}{!readOnly && orphanedAssignments > 0 && <span>{orphanedAssignments} asignaciones para revisar</span>}<a href="#listado-mesas">Ver todas las listas ↓</a></div>
+      <fieldset className="seating-layout" disabled={saving}>
         <aside className="seating-guests">
-          <h3>Invitados</h3>
-          <input aria-label="Buscar invitados" placeholder="Buscar persona o grupo…" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <div className="seating-sidebar-heading"><h3>Invitados</h3><span>{guests.length}</span></div>
+          <input aria-label="Buscar invitados" placeholder="Buscar por nombre…" value={search} onChange={(event) => setSearch(event.target.value)} />
           <div className="seating-guest-list">
             {visibleGuests.map((guest) => {
               const table = plan.items.find((item) => item.id === plan.assignments[guest.id]);
-              return <button key={guest.id} type="button" draggable onDragStart={(event) => event.dataTransfer.setData("text/plain", guest.id)} onClick={() => setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id)} className={selectedGuestId === guest.id ? "selected" : ""}>
-                <span><strong>{guest.name}</strong><small>{guest.group !== guest.name ? guest.group : guest.manual ? "Agregado al plano" : "Titular"}{guest.dietary ? ` · ${guest.dietary}` : ""}</small></span><em>{table ? tableDisplayName(table) : "Sin mesa"}</em>
+              return <button key={guest.id} type="button" draggable={!readOnly} onDragStart={(event) => event.dataTransfer.setData("text/plain", guest.id)} onClick={() => { setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id); if (table) { setSelectedItemId(table.id); fitCanvas(); } }} className={selectedGuestId === guest.id ? "selected" : ""}>
+                <span><strong>{guest.name}</strong>{!readOnly && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span><em>{table ? tableDisplayName(table) : "—"}</em>
               </button>;
             })}
+            {!visibleGuests.length && <p className="seating-no-results">No encontramos ese nombre.</p>}
           </div>
-          {selectedGuestId && <div className="seating-guest-actions"><button type="button" onClick={() => assignGuest(selectedGuestId, null)}>Dejar sin mesa</button>{plan.manual_guests.some((guest) => guest.id === selectedGuestId) && <button type="button" onClick={() => { updatePlan((current) => ({ ...current, manual_guests: current.manual_guests.filter((guest) => guest.id !== selectedGuestId), assignments: Object.fromEntries(Object.entries(current.assignments).filter(([id]) => id !== selectedGuestId)) })); setSelectedGuestId(null); }}>Quitar persona del plano</button>}</div>}
-          {!officialRoster && <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}>
-            <label htmlFor="seating-new-guest">Agregar persona pendiente</label><div><input id="seating-new-guest" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="Nombre y apellido" maxLength={120} /><button type="submit">Agregar</button></div>
-          </form>}
+          {!readOnly && selectedGuestId && <div className="seating-guest-actions"><span>Elegí una mesa para ubicar a {guestById.get(selectedGuestId)?.name}.</span><button type="button" onClick={() => assignGuest(selectedGuestId, null)}>Dejar sin mesa</button><button type="button" onClick={() => setSelectedGuestId(null)}>Cancelar selección</button></div>}
+          {!readOnly && !officialRoster && <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}><label htmlFor="seating-new-guest">Agregar persona pendiente</label><div><input id="seating-new-guest" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="Nombre y apellido" maxLength={120} /><button type="submit">Agregar</button></div></form>}
+          {readOnly && selectedItem && ["table", "main"].includes(selectedItem.kind) && <div className="seating-table-preview"><small>Mesa seleccionada</small><h3>{tableDisplayName(selectedItem)} <span>{selectedItem.movie}</span></h3><ul>{guests.filter(g => plan.assignments[g.id] === selectedItem.id).map(g => <li key={g.id} className={g.id === selectedGuestId ? "highlighted" : ""}>{g.name}</li>)}</ul></div>}
         </aside>
         <div className="seating-workspace">
-          <div className="seating-tools"><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Mesa principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button></div>
-          <RoomOutlineEditor outline={plan.room_outline} disabled={loading || loadFailed || saving} zoom={canvasWidth ? zoom : 1} onEditingChange={(editing) => { setDrawingOutline(editing); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => {
-            const next = { ...current };
-            if (outline) next.room_outline = outline;
-            else delete next.room_outline;
-            return next;
-          })}>
+          {!readOnly && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button></div>}
+          <RoomOutlineEditor readOnly={readOnly} outline={plan.room_outline} disabled={loading || loadFailed || saving} zoom={zoom} onEditingChange={(editing) => { setDrawingOutline(editing); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => { const next = { ...current }; if (outline) next.room_outline = outline; else delete next.room_outline; return next; })}>
           {({ layer, editing }) => <>
-          {canvasWidth > 0 && <div className="seating-zoom"><button type="button" onClick={() => setZoom(Math.min(1, ((canvasRef.current?.clientWidth || canvasWidth) - 2) / canvasWidth))}>Ver todo el salón</button><label>Zoom <input type="range" min="0.15" max="1.2" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label><span>{Math.round(zoom * 100)}%</span></div>}
-          <div className="seating-canvas" ref={canvasRef}>
-          <div className="seating-scaled-frame" style={canvasWidth ? { width: canvasWidth * zoom, height: canvasHeight * zoom } : undefined}>
-          <div className="seating-stage" aria-label="Plano editable del salón" style={canvasWidth ? { width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" } : undefined}>
-            <div className="seating-stage-caption">SALÓN · ARRASTRÁ PARA MOVER</div>
-            {layer}
-            {plan.items.filter((item) => item.kind !== "couple" || !plan.couple_at_main).map((item) => {
-              const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
-              const isTable = item.kind === "table" || item.kind === "main";
-              const occupied = people.length + reservedCoupleSeats(item);
-              return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%` }} onClick={() => { setSelectedItemId(item.id); if (selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={isTable ? (event) => event.preventDefault() : undefined} onDrop={isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`}>
-                {isTable && <span className="seating-seats" aria-hidden="true">{Array.from({ length: item.capacity }, (_, index) => { const angle = 2 * Math.PI * index / item.capacity; return <i key={index} className={index < occupied ? "filled" : ""} style={{ left: `${50 + Math.cos(angle) * 45}%`, top: `${50 + Math.sin(angle) * 45}%` }} />; })}</span>}
-                <span className="seating-item-label">{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable && /^\d+$/.test(tableDisplayName(item)) ? "seating-table-number" : undefined}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}{item.kind === "main" && plan.couple_at_main ? " · novios" : ""}</em>}</span>
-              </button>;
-            })}
-          </div>
-          </div>
-          </div>
+            <div className="seating-zoom"><button type="button" onClick={fitCanvas}>Ver todo el salón</button><div className="seating-zoom-controls"><button type="button" aria-label="Alejar plano" onClick={() => changeZoom(zoom / 1.25)}>−</button><label><span className="seating-sr-only">Zoom</span><input aria-label="Zoom del plano" type="range" min=".15" max="2" step=".01" value={zoom} onChange={(event) => changeZoom(Number(event.target.value))} /></label><button type="button" aria-label="Acercar plano" onClick={() => changeZoom(zoom * 1.25)}>+</button><output>{Math.round(zoom * 100)}%</output></div><span className="seating-pan-hint">Arrastrá el fondo para recorrer el plano</span></div>
+            <div className="seating-canvas" ref={canvasRef} tabIndex={0} aria-label="Vista del salón, desplazable con las flechas" onPointerDown={(event) => { if (editing || event.button !== 0 || (event.target as HTMLElement).closest("button")) return; pan.current = { x: event.clientX, y: event.clientY, left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!pan.current) return; event.currentTarget.scrollLeft = pan.current.left - (event.clientX - pan.current.x); event.currentTarget.scrollTop = pan.current.top - (event.clientY - pan.current.y); }} onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }}>
+              <div className="seating-canvas-center">
+              <div className="seating-scaled-frame" style={{ width: canvasWidth * zoom, height: canvasHeight * zoom }}>
+                <div className="seating-stage" aria-label={readOnly ? "Plano del salón" : "Plano editable del salón"} style={{ width: canvasWidth, height: canvasHeight, minHeight: 0, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
+                  {layer}
+                  {plan.items.filter((item) => item.kind !== "couple" || !plan.couple_at_main).map((item) => {
+                    const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
+                    const isTable = item.kind === "table" || item.kind === "main";
+                    const occupied = people.length + reservedCoupleSeats(item);
+                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemId === item.id ? " active" : ""}${!readOnly && selectedGuestId && isTable ? " target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%` }} onClick={() => { setSelectedItemId(item.id); if (!readOnly && selectedGuestId && isTable) assignGuest(selectedGuestId, item.id); }} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onDragOver={!readOnly && isTable ? (event) => event.preventDefault() : undefined} onDrop={!readOnly && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={item.name}>
+                      {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => { const angle = index / item.capacity * Math.PI * 2 - Math.PI / 2; return <i key={index} className={index < occupied ? "filled" : ""} style={{ left: `${50 + Math.cos(angle) * 50}%`, top: `${50 + Math.sin(angle) * 50}%` }} />; })}</span>}
+                      <span className="seating-item-label">{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{item.movie && <span className="seating-movie">{item.movie}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
+                    </button>;
+                  })}
+                </div>
+              </div>
+              </div>
+            </div>
           </>}
           </RoomOutlineEditor>
-          <div className="seating-editor">
+        </div>
+      </fieldset>
+      {!readOnly && <div className="seating-editor">
             {selectedItem ? <>
               <div><small>Elemento seleccionado</small><h3>{selectedItem.name}</h3></div>
               {["table", "main"].includes(selectedItem.kind) && <>
@@ -321,15 +366,15 @@ export function SeatingPlanner({ rsvps }: { rsvps: RsvpSource[] }) {
               {["table", "main"].includes(selectedItem.kind) && <div className="seating-assigned"><strong>Personas en esta mesa</strong>{guests.filter((guest) => plan.assignments[guest.id] === selectedItem.id).map((guest) => <button type="button" key={guest.id} onClick={() => assignGuest(guest.id, null)} title="Quitar de la mesa">{guest.name} ×</button>)}</div>}
               {selectedItem.kind === "table" && <button className="seating-remove" type="button" onClick={() => removeItem(selectedItem.id)}>Quitar mesa y liberar lugares</button>}
             </> : <p>Seleccioná una mesa para cambiarle el nombre, los lugares y sus invitados.</p>}
-          </div>
-          <div className="seating-roster" aria-label="Distribución por mesa">
-            {plan.items.filter((item) => item.kind === "table" || item.kind === "main").map((item) => {
-              const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
-              return <article key={item.id}><h3 className="seating-roster-number">{tableDisplayName(item)}</h3>{item.movie && <p className="seating-roster-movie">{item.movie}</p>}<small>{people.length + reservedCoupleSeats(item)}/{item.capacity} lugares</small>{item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}{people.length ? people.map((guest) => <p key={guest.id}>{guest.name}{guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}</article>;
-            })}
-          </div>
-        </div>
-      </fieldset>
+          </div>}
+      <div className="seating-roster-heading" id="listado-mesas"><div><p className="seating-kicker">La compañía perfecta</p><h2>Todas las mesas.</h2></div><p>{guests.length} personas · {plan.items.filter(i => i.kind === "table" || i.kind === "main").length} mesas</p></div>
+      <div className="seating-roster" aria-label="Distribución por mesa">
+        {plan.items.filter((item) => item.kind === "table" || item.kind === "main").sort((a, b) => (a.number || 0) - (b.number || 0)).map((item) => {
+          const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
+          return <article key={item.id} className={selectedItemId === item.id ? "selected" : ""}><div className="seating-roster-top"><h3 className="seating-roster-number">{tableDisplayName(item)}</h3><small>{people.length + reservedCoupleSeats(item)} personas</small></div>{item.movie && <p className="seating-roster-movie">{item.movie}</p>}{item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}{people.length ? people.map((guest) => <p key={guest.id} className={selectedGuestId === guest.id ? "highlighted" : ""}>{guest.name}{!readOnly && guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}</article>;
+        })}
+      </div>
+      </>}
     </section>
   );
 }

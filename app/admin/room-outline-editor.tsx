@@ -28,7 +28,8 @@ function validOutline(points: RoomPoint[]) {
   return Math.abs(area) > 0.1;
 }
 
-export function RoomOutlineEditor({ outline, disabled, zoom, onApply, onEditingChange, children }: {
+export function RoomOutlineEditor({ outline, disabled, readOnly = false, zoom, onApply, onEditingChange, children }: {
+  readOnly?: boolean;
   outline?: RoomOutline;
   disabled: boolean;
   zoom: number;
@@ -182,7 +183,7 @@ export function RoomOutlineEditor({ outline, disabled, zoom, onApply, onEditingC
   </div>;
 
   return <>
-    <div className={`seating-outline-tools${editing ? " editing" : ""}`}>
+    {!readOnly && <div className={`seating-outline-tools${editing ? " editing" : ""}`}>
       {!editing ? <button type="button" onClick={start}>{outline ? "Editar contorno del salón" : "Dibujar salón"}</button> : <>
         <div className="seating-outline-actions">
           <button type="button" aria-pressed={mode === "rectangle"} onClick={() => changeMode("rectangle")}>Rectángulo rápido</button>
@@ -197,7 +198,7 @@ export function RoomOutlineEditor({ outline, disabled, zoom, onApply, onEditingC
         <p>{mode === "rectangle" ? "Arrastrá sobre el plano para dibujar un rectángulo. Después podés agregar y mover esquinas." : mode === "polygon" ? "Tocá cada esquina del salón. Para cerrarlo, tocá el primer punto o «Cerrar contorno». Podés dibujar entrantes, salientes y formas en L." : "Arrastrá las esquinas para dar forma al salón. Tocá una pared para agregar una esquina y crear un entrante o saliente."} Al terminar, aplicá el contorno y guardá el plano.</p>
         {error && <p className="seating-outline-error" role="status">{error}</p>}
       </>}
-    </div>
+    </div>}
     {children({ layer, editing })}
   </>;
 }
