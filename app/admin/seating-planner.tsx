@@ -224,7 +224,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
-      if (pendingDelete || drawingOutline || event.ctrlKey || event.metaKey || event.altKey || (event.target as Element)?.closest("input,textarea,select,[contenteditable=true]")) return;
+      if (pendingDelete || drawingOutline || event.ctrlKey || event.metaKey || event.altKey || (event.target as Element)?.closest("input:not([type=range]),textarea,select,[contenteditable=true]")) return;
       if (event.key.toLowerCase() === "h") { event.preventDefault(); fitCanvas(); }
       if (event.key === "Escape") { setSelectedItemId(""); setSelectedGuestId(null); }
     };
@@ -350,6 +350,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
 
   function startPan(event: PointerEvent<HTMLDivElement>) {
     event.preventDefault();
+    event.currentTarget.focus({ preventScroll: true });
     fitMode.current = false;
     pan.current = { x: event.clientX, y: event.clientY, left: camera.x, top: camera.y, deselect: event.button === 0 };
     event.currentTarget.classList.add("is-panning");
