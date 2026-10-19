@@ -15,6 +15,8 @@ import { Download, Link as LinkIcon, Undo2, Redo2, Scan, Trash2, ArrowLeft } fro
 import { applyRoomOutline, DEFAULT_OUTLINE, snapDoor, withRoomDefaults } from "./room-geometry";
 import { DimensionInput } from "./dimension-input";
 import { DeleteRoomItemDialog } from "./delete-room-item-dialog";
+import { DeleteGuestsDialog } from "./delete-guests-dialog";
+import { reassignGuests, removeGuests } from "./seating-guests";
 
 type RsvpSource = {
   id: string;
@@ -36,6 +38,7 @@ export type Plan = {
   couple_in_roster?: boolean;
   guest_source?: "rsvps" | "official";
   official_guests?: Guest[];
+  excluded_guest_ids?: string[];
   canvas?: { width: number; height: number };
   room_outline?: RoomOutline;
   source?: { url: string; title: string; sheet: string; range: string; imported_at: string; guest_count: number; table_count: number; sha256: string };
@@ -133,8 +136,9 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   const setSelectedItemId = useCallback((id: string) => setSelectedItemIds(id ? [id] : []), []);
   const [marquee, setMarquee] = useState<SelectionBox | null>(null);
   const [pendingDelete, setPendingDelete] = useState<RoomItem | null>(null);
-  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
-  const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
+  const [selectedGuestIds, setSelectedGuestIds] = useState<string[]>([]);
+  const [draggedGuestIds, setDraggedGuestIds] = useState<string[]>([]);
+  const [pendingGuestDelete, setPendingGuestDelete] = useState<Guest[] | null>(null);
   const [guestDropTarget, setGuestDropTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [manualName, setManualName] = useState("");
@@ -152,8 +156,9 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
 
   const rsvpGuests = useMemo(() => guestsFromRsvps(rsvps), [rsvps]);
   const officialRoster = plan.guest_source === "official";
-  const guests = useMemo(() => officialRoster ? plan.official_guests || [] : [...rsvpGuests, ...plan.manual_guests], [officialRoster, plan.official_guests, rsvpGuests, plan.manual_guests]);
+  const guests = useMemo(() => (officialRoster ? plan.official_guests || [] : [...rsvpGuests, ...plan.manual_guests]).filter(guest => !plan.excluded_guest_ids?.includes(guest.id)), [officialRoster, plan.official_guests, rsvpGuests, plan.manual_guests, plan.excluded_guest_ids]);
   const guestById = useMemo(() => new Map(guests.map((guest) => [guest.id, guest])), [guests]);
+  const selectedGuests = guests.filter(guest => selectedGuestIds.includes(guest.id));
   const selectedItems = plan.items.filter(item => selectedItemIds.includes(item.id));
   const selectedItem = selectedItems.length === 1 ? selectedItems[0] : undefined;
   const sidebarTables = selectedItems.filter(item => ["table", "main"].includes(item.kind));
@@ -234,18 +239,18 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
-      if (pendingDelete || drawingOutline || event.ctrlKey || event.metaKey || event.altKey || (event.target as Element)?.closest("input:not([type=range]),textarea,select,[contenteditable=true]")) return;
+      if (pendingDelete || pendingGuestDelete || drawingOutline || event.ctrlKey || event.metaKey || event.altKey || (event.target as Element)?.closest("input:not([type=range]),textarea,select,[contenteditable=true]")) return;
       if (event.key.toLowerCase() === "h" && !drag.current && !marqueeGesture.current) { event.preventDefault(); fitCanvas(); }
-      if (event.key === "Escape") { marqueeGesture.current = null; setMarquee(null); setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }
+      if (event.key === "Escape") { marqueeGesture.current = null; setMarquee(null); setSelectedItemId(""); setSelectedGuestIds([]); setSearch(""); }
     };
     window.addEventListener("keydown", keyboard);
     return () => window.removeEventListener("keydown", keyboard);
-  }, [fitCanvas, pendingDelete, drawingOutline, setSelectedItemId]);
+  }, [fitCanvas, pendingDelete, pendingGuestDelete, drawingOutline, setSelectedItemId]);
 
   useEffect(() => {
     if (readOnly) return;
     const keyboard = (event: KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || drawingOutline || pendingDelete || (event.target as Element)?.closest("input,textarea,select,[contenteditable=true]")) return;
+      if (!(event.ctrlKey || event.metaKey) || drawingOutline || pendingDelete || pendingGuestDelete || (event.target as Element)?.closest("input:not([type=checkbox]),textarea,select,[contenteditable=true]")) return;
       if (event.key.toLowerCase() === "z") { event.preventDefault(); setStatus(""); if (event.shiftKey) session.redo(); else session.undo(); }
       else if (event.key.toLowerCase() === "y") { event.preventDefault(); setStatus(""); session.redo(); }
     };
@@ -253,7 +258,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     const online = () => { void session.flush(); };
     window.addEventListener("online", online);
     return () => { window.removeEventListener("keydown", keyboard); window.removeEventListener("online", online); };
-  }, [session, readOnly, drawingOutline, pendingDelete]);
+  }, [session, readOnly, drawingOutline, pendingDelete, pendingGuestDelete]);
 
   useEffect(() => {
     if (!dirty && !drawingOutline) return;
@@ -271,21 +276,33 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     setStatus("");
   }
 
-  function assignGuest(guestId: string, tableId: string | null) {
-    if (!fullEdit || !guestById.has(guestId)) return;
+  function assignGuests(guestIds: string[], tableId: string | null) {
+    if (!fullEdit) return;
+    const ids = [...new Set(guestIds)].filter(id => guestById.has(id));
+    if (!ids.length) return;
     const table = plan.items.find((item) => item.id === tableId);
     if (tableId && (!table || !["table", "main"].includes(table.kind))) return;
-    updatePlan((current) => {
-      const assignments = { ...current.assignments };
-      if (tableId) assignments[guestId] = tableId;
-      else delete assignments[guestId];
-      const occupied = table ? Object.values(assignments).filter(id => id === tableId).length + reservedCoupleSeats(table) : 0;
-      const items = current.items.map(item => item.id === tableId && occupied > item.capacity ? { ...item, capacity: occupied } : item);
-      return { ...current, assignments, items };
-    });
+    updatePlan(current => reassignGuests(current, ids, tableId));
     if (tableId) setSelectedItemId(tableId);
-    setSelectedGuestId(null);
-    if (plan.assignments[guestId] !== tableId) setStatus(table ? `${guestById.get(guestId)!.name} pasó a la mesa ${tableDisplayName(table)}.` : `${guestById.get(guestId)!.name} quedó sin mesa.`);
+    setSelectedGuestIds([]);
+    if (ids.some(id => plan.assignments[id] !== tableId)) {
+      const who = ids.length === 1 ? guestById.get(ids[0])!.name : `${ids.length} personas`;
+      setStatus(table ? `${who} ${ids.length === 1 ? "pasó" : "pasaron"} a la mesa ${tableDisplayName(table)}.` : `${who} ${ids.length === 1 ? "quedó" : "quedaron"} sin mesa.`);
+    }
+  }
+
+  function toggleGuest(guestId: string) {
+    if (!fullEdit) return;
+    setSelectedGuestIds(ids => ids.includes(guestId) ? ids.filter(id => id !== guestId) : [...ids, guestId]);
+  }
+
+  function confirmGuestRemoval() {
+    if (!fullEdit || !pendingGuestDelete) return;
+    const ids = pendingGuestDelete.map(guest => guest.id).filter(id => guestById.has(id));
+    updatePlan(current => removeGuests(current, ids));
+    setSelectedGuestIds([]);
+    setPendingGuestDelete(null);
+    setStatus(`${ids.length === 1 ? "Persona eliminada" : `${ids.length} personas eliminadas`} de la lista del casamiento. Podés deshacer con Ctrl+Z.`);
   }
 
   function addItem(kind: ItemKind) {
@@ -336,7 +353,7 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     if (readOnly || event.button !== 0 || (sharedEdit && !["table", "main"].includes(item.kind))) return;
     skipItemClick.current = false;
     if (event.shiftKey && ["table", "main"].includes(item.kind)) return;
-    if (selectedGuestId && ["table", "main"].includes(item.kind)) return;
+    if (fullEdit && selectedGuests.length && ["table", "main"].includes(item.kind)) return;
     const moving = selectedItemIds.includes(item.id) && selectedItems.length > 1 ? selectedItems : [item];
     fitMode.current = false;
     if (moving.length === 1) setSelectedItemId(item.id);
@@ -374,19 +391,19 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   function clickItem(item: RoomItem, additive: boolean) {
     if (skipItemClick.current) { skipItemClick.current = false; return; }
     if (additive && !readOnly && ["table", "main"].includes(item.kind)) {
-      setSelectedGuestId(null);
+      setSelectedGuestIds([]);
       setSelectedItemIds(ids => ids.includes(item.id) ? ids.filter(id => id !== item.id) : [...ids.filter(id => plan.items.some(item => item.id === id && ["table", "main"].includes(item.kind))), item.id]);
       return;
     }
     setSelectedItemId(item.id);
-    if (fullEdit && selectedGuestId && ["table", "main"].includes(item.kind)) assignGuest(selectedGuestId, item.id);
+    if (fullEdit && selectedGuests.length && ["table", "main"].includes(item.kind)) assignGuests(selectedGuests.map(guest => guest.id), item.id);
   }
 
   function startMarquee(event: PointerEvent<HTMLDivElement>) {
     event.preventDefault();
     fitMode.current = false;
     event.currentTarget.focus({ preventScroll: true });
-    setSelectedGuestId(null);
+    setSelectedGuestIds([]);
     marqueeGesture.current = { x: event.clientX, y: event.clientY, initial: selectedItems.filter(item => ["table", "main"].includes(item.kind)).map(item => item.id), additive: event.shiftKey, moved: false };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -426,24 +443,25 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
   function endPan(event: PointerEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return;
     if (pan.current && event.type === "pointerup") setCamera({ x: pan.current.left + event.clientX - pan.current.x, y: pan.current.top + event.clientY - pan.current.y });
-    if (pan.current?.deselect && event.type === "pointerup" && Math.hypot(event.clientX - pan.current.x, event.clientY - pan.current.y) < 4) { setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }
+    if (pan.current?.deselect && event.type === "pointerup" && Math.hypot(event.clientX - pan.current.x, event.clientY - pan.current.y) < 4) { setSelectedItemId(""); setSelectedGuestIds([]); setSearch(""); }
     pan.current = null;
     event.currentTarget.classList.remove("is-panning");
   }
 
   function startGuestDrag(event: DragEvent<HTMLElement>, guestId: string) {
     if (!fullEdit || !guestById.has(guestId)) { event.preventDefault(); return; }
+    const ids = selectedGuestIds.includes(guestId) ? selectedGuests.map(guest => guest.id) : [guestId];
     event.dataTransfer.setData("application/x-myg-guest", guestId);
     event.dataTransfer.setData("text/plain", guestId);
     event.dataTransfer.effectAllowed = "move";
-    setDraggedGuestId(guestId);
+    setDraggedGuestIds(ids);
     setGuestDropTarget(null);
   }
 
-  function endGuestDrag() { setDraggedGuestId(null); setGuestDropTarget(null); }
+  function endGuestDrag() { setDraggedGuestIds([]); setGuestDropTarget(null); }
 
   function dragGuestOver(event: DragEvent<HTMLElement>, item: RoomItem) {
-    if (!fullEdit || !draggedGuestId) return;
+    if (!fullEdit || !draggedGuestIds.length) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     setGuestDropTarget(item.id);
@@ -453,9 +471,9 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
     event.preventDefault();
     event.stopPropagation();
     if (!fullEdit) return;
-    const guestId = event.dataTransfer.getData("application/x-myg-guest") || event.dataTransfer.getData("text/plain") || draggedGuestId || "";
+    const guestIds = [...draggedGuestIds];
     endGuestDrag();
-    if (guestById.has(guestId)) assignGuest(guestId, item.id);
+    if (guestIds.length) assignGuests(guestIds, item.id);
   }
 
 
@@ -476,23 +494,23 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
           </div>
           {sidebarTables.length ? <div className="seating-sidebar-table-heading">
             {sidebarTables.length > 1 ? <p>Mesas {sidebarTables.map(tableDisplayName).join(", ")}</p> : sidebarTable && tableTitle(sidebarTable) && <p>{tableTitle(sidebarTable)}</p>}
-            <button type="button" className="seating-all-guests" onClick={() => { setSelectedItemId(""); setSelectedGuestId(null); setSearch(""); }}><ArrowLeft size={14} />Todos los invitados</button>
+            <button type="button" className="seating-all-guests" onClick={() => { setSelectedItemId(""); setSelectedGuestIds([]); setSearch(""); }}><ArrowLeft size={14} />Todos los invitados</button>
           </div> : <input aria-label="Buscar invitados" placeholder="Buscar por nombre…" value={search} onChange={(event) => setSearch(event.target.value)} />}
           <div key={sidebarTables.map(table => table.id).join(",") || "all-guests"} className="seating-guest-list" tabIndex={0} aria-label={sidebarTables.length > 1 ? "Personas de las mesas seleccionadas" : sidebarTable ? "Personas de esta mesa" : "Lista de invitados"}>
             {visibleGuests.map((guest) => {
               const table = plan.items.find((item) => item.id === plan.assignments[guest.id]);
-              return <button key={guest.id} type="button" draggable={fullEdit} onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} onClick={() => { setSelectedGuestId(selectedGuestId === guest.id ? null : guest.id); if (table) { setSelectedItemId(table.id); fitCanvas(); } }} className={`${selectedGuestId === guest.id ? "selected" : ""}${draggedGuestId === guest.id ? " dragging" : ""}`}>
-                <span><strong>{guest.name}</strong>{fullEdit && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span>{!sidebarTable && <em>{table ? tableDisplayName(table) : "—"}</em>}
+              return <button key={guest.id} type="button" draggable={fullEdit} aria-pressed={fullEdit ? selectedGuestIds.includes(guest.id) : undefined} onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} onClick={() => { if (fullEdit) toggleGuest(guest.id); else { setSelectedGuestIds([guest.id]); if (table) { setSelectedItemId(table.id); fitCanvas(); } } }} className={`${selectedGuestIds.includes(guest.id) ? "selected" : ""}${draggedGuestIds.includes(guest.id) ? " dragging" : ""}`}>
+                {fullEdit && <span className="seating-guest-check" aria-hidden="true">{selectedGuestIds.includes(guest.id) ? "✓" : ""}</span>}<span className="seating-guest-info"><strong>{guest.name}</strong>{fullEdit && <small>{guest.group}{guest.dietary ? ` · ${guest.dietary}` : ""}</small>}</span>{!sidebarTable && <em>{table ? tableDisplayName(table) : "—"}</em>}
               </button>;
             })}
             {!visibleGuests.length && <p className="seating-no-results">{sidebarTables.length ? "Todavía no hay invitados asignados." : "No encontramos ese nombre."}</p>}
           </div>
-          {fullEdit && selectedGuestId && <div className="seating-guest-actions"><span>Elegí una mesa para ubicar a {guestById.get(selectedGuestId)?.name}.</span><button type="button" onClick={() => assignGuest(selectedGuestId, null)}>Dejar sin mesa</button><button type="button" onClick={() => setSelectedGuestId(null)}>Cancelar selección</button></div>}
+          {fullEdit && selectedGuests.length > 0 && <div className="seating-guest-actions"><span>{selectedGuests.length} {selectedGuests.length === 1 ? "persona seleccionada" : "personas seleccionadas"}. Arrastrá a otra mesa o tocá la mesa de destino.</span><button type="button" onClick={() => assignGuests(selectedGuests.map(guest => guest.id), null)}>Dejar sin mesa</button><button type="button" onClick={() => setSelectedGuestIds([])}>Cancelar selección</button><button type="button" className="seating-delete-guests" onClick={() => setPendingGuestDelete(selectedGuests)}><Trash2 size={14} />Eliminar del casamiento</button></div>}
           {fullEdit && !officialRoster && <form className="seating-manual" onSubmit={(event) => { event.preventDefault(); const name = manualName.trim(); if (!name) return; updatePlan((current) => ({ ...current, manual_guests: [...current.manual_guests, { id: `manual:${crypto.randomUUID()}`, name, dietary: "", group: "Agregado al plano", manual: true }] })); setManualName(""); }}><label htmlFor="seating-new-guest">Agregar persona pendiente</label><div><input id="seating-new-guest" value={manualName} onChange={(event) => setManualName(event.target.value)} placeholder="Nombre y apellido" maxLength={120} /><button type="submit">Agregar</button></div></form>}
         </aside>
         <div className="seating-workspace">
           {fullEdit && <div className="seating-tools"><span>Agregar</span><button type="button" onClick={() => addItem("table")}>+ Mesa</button><button type="button" onClick={() => addItem("main")}>Principal</button><button type="button" onClick={() => addItem("dance")}>Pista</button><button type="button" onClick={() => addItem("dj")}>DJ</button><button type="button" onClick={() => addItem("door")}>+ Puerta</button></div>}
-          <RoomOutlineEditor readOnly={!fullEdit} outline={plan.room_outline || DEFAULT_OUTLINE} disabled={loading || loadFailed} zoom={zoom} onEditingChange={(editing) => { fitMode.current = true; setDrawingOutline(editing); setCamera({ x: 0, y: 0 }); if (editing) setSelectedGuestId(null); }} onApply={(outline) => updatePlan((current) => applyRoomOutline(current, outline || DEFAULT_OUTLINE))}>
+          <RoomOutlineEditor readOnly={!fullEdit} outline={plan.room_outline || DEFAULT_OUTLINE} disabled={loading || loadFailed} zoom={zoom} onEditingChange={(editing) => { fitMode.current = true; setDrawingOutline(editing); setCamera({ x: 0, y: 0 }); if (editing) setSelectedGuestIds([]); }} onApply={(outline) => updatePlan((current) => applyRoomOutline(current, outline || DEFAULT_OUTLINE))}>
           {({ layer, editing }) => <>
             <div className="seating-zoom"><button type="button" className="seating-fit-button" title="Centrar y encuadrar todo el salón · H" onClick={fitCanvas}><Scan size={15} /><span>Centrar plano</span><kbd>H</kbd></button></div>
             <div className="seating-canvas" ref={canvasRef} tabIndex={0} aria-label="Vista del salón, desplazable con la ruedita apretada o las flechas" onKeyDown={event => { if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return; event.preventDefault(); fitMode.current = false; setCamera(current => ({ x: current.x + (event.key === "ArrowLeft" ? 40 : event.key === "ArrowRight" ? -40 : 0), y: current.y + (event.key === "ArrowUp" ? 40 : event.key === "ArrowDown" ? -40 : 0) })); }} onPointerDownCapture={event => { if (event.button === 1 && !transforming.current && !drag.current) { event.stopPropagation(); startPan(event); } }} onPointerDown={event => { if (editing || event.button !== 0 || (event.target as Element).closest("button")) return; if (readOnly) startPan(event); else startMarquee(event); }} onPointerMove={event => { if (marqueeGesture.current) moveMarquee(event); else if (pan.current) setCamera({ x: pan.current.left + event.clientX - pan.current.x, y: pan.current.top + event.clientY - pan.current.y }); }} onPointerUp={event => { endMarquee(event); endPan(event); }} onPointerCancel={event => { endMarquee(event); endPan(event); }} onLostPointerCapture={event => { endMarquee(event); endPan(event); }} onAuxClick={event => { if (event.button === 1) event.preventDefault(); }}>
@@ -506,13 +524,13 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
                     const isTable = item.kind === "table" || item.kind === "main";
                     const occupied = people.length + reservedCoupleSeats(item);
                     const geometry = itemGeometry(item);
-                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemIds.includes(item.id) ? " active" : ""}${fullEdit && (selectedGuestId || draggedGuestId) && isTable ? " target" : ""}${guestDropTarget === item.id ? " guest-drop-target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={event => clickItem(item, event.shiftKey)} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onLostPointerCapture={onItemPointerUp} onDragOver={fullEdit && isTable ? event => dragGuestOver(event, item) : undefined} onDragLeave={fullEdit && isTable ? event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGuestDropTarget(null); } : undefined} onDrop={fullEdit && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}>
+                    return <button key={item.id} type="button" disabled={editing} className={`seating-item seating-${item.kind}${selectedItemIds.includes(item.id) ? " active" : ""}${fullEdit && (selectedGuests.length || draggedGuestIds.length) && isTable ? " target" : ""}${guestDropTarget === item.id ? " guest-drop-target" : ""}`} style={{ left: `${item.x}%`, top: `${item.y}%`, width: geometry.width, height: geometry.height, borderRadius: geometry.shape === "circle" ? "50%" : 8, transform: `translate(-50%, -50%) rotate(${geometry.rotation}deg)` }} onClick={event => clickItem(item, event.shiftKey)} onPointerDown={(event) => onItemPointerDown(event, item)} onPointerMove={onItemPointerMove} onPointerUp={onItemPointerUp} onPointerCancel={onItemPointerUp} onLostPointerCapture={onItemPointerUp} onDragOver={fullEdit && isTable ? event => dragGuestOver(event, item) : undefined} onDragLeave={fullEdit && isTable ? event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGuestDropTarget(null); } : undefined} onDrop={fullEdit && isTable ? (event) => dropGuest(event, item) : undefined} aria-label={`${isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}${isTable ? ` · ${occupied}/${item.capacity} lugares` : ""}`} title={isTable ? `Mesa ${tableDisplayName(item)}${tableTitle(item) ? ` · ${tableTitle(item)}` : ""}` : item.name}>
                       {isTable && <span className="seating-seats">{Array.from({ length: item.capacity }, (_, index) => <i key={index} className={index < occupied ? "filled" : ""} style={seatPosition(index, item.capacity, geometry)} />)}</span>}
                       {item.kind === "door" && <svg className="seating-door-symbol" viewBox="0 -100 100 200" aria-hidden="true"><path d="M0 0 H100" stroke="#10100f" strokeWidth="9" /><path d="M0 0 V100 M0 100 A100 100 0 0 0 100 0" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M0 -5 V5 M100 -5 V5" stroke="currentColor" strokeWidth="4" /></svg>}
                       <span className="seating-item-label" style={{ transform: `rotate(${-geometry.rotation}deg)` }}>{item.kind !== "table" && <small>{labelFor(item.kind)}</small>}<strong className={isTable ? "seating-table-number" : ""}>{isTable ? tableDisplayName(item) : item.name}</strong>{isTable && tableTitle(item) && <span className="seating-movie">{tableTitle(item)}</span>}{isTable && <em>{occupied}/{item.capacity}</em>}</span>
                     </button>;
                   })}
-                  {fullEdit && !editing && !selectedGuestId && !draggedGuestId && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; if (active) session.beginGesture(); else session.endGesture(); }} />}
+                  {fullEdit && !editing && !selectedGuests.length && !draggedGuestIds.length && selectedItem && (selectedItem.kind !== "couple" || !plan.couple_at_main) && <ItemTransformControls key={selectedItem.id} item={selectedItem} zoom={zoom} canvasWidth={canvasWidth} canvasHeight={canvasHeight} onChange={updateItem} onGesture={active => { transforming.current = active; if (active) session.beginGesture(); else session.endGesture(); }} />}
                 </div>
               </div>
               </div>
@@ -553,6 +571,10 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
         </div>
       </fieldset>
       <div className="seating-roster-heading" id="listado-mesas"><div><p className="seating-kicker">La compañía perfecta</p><h2>Todas las mesas.</h2></div><p>{guests.length} personas · {plan.items.filter(i => i.kind === "table" || i.kind === "main").length} mesas</p></div>
+      {fullEdit && <div className="seating-roster-selection" aria-label="Acciones de invitados">
+        <span aria-live="polite">{selectedGuests.length ? <><strong>{selectedGuests.length} {selectedGuests.length === 1 ? "persona seleccionada" : "personas seleccionadas"}</strong> · Arrastrá un nombre marcado para mover {selectedGuests.length === 1 ? "a esa persona" : "a todo el grupo"}.</> : "Marcá los nombres que quieras mover juntos y arrastralos a otra mesa."}</span>
+        {selectedGuests.length > 0 && <><button type="button" onClick={() => setSelectedGuestIds([])}>Cancelar selección</button><button type="button" className="seating-delete-guests" onClick={() => setPendingGuestDelete(selectedGuests)}><Trash2 size={15} />Eliminar del casamiento</button></>}
+      </div>}
       <div className="seating-roster" aria-label="Distribución por mesa">
         {plan.items.filter((item) => item.kind === "table" || item.kind === "main").sort((a, b) => (a.number || 0) - (b.number || 0)).map((item) => {
           const people = guests.filter((guest) => plan.assignments[guest.id] === item.id);
@@ -560,12 +582,15 @@ export function SeatingPlanner({ rsvps, readOnly = false, sharedEdit = false }: 
             <div className="seating-roster-top"><h3 className="seating-roster-number">{tableDisplayName(item)}</h3><small>{people.length + reservedCoupleSeats(item)} personas</small></div>
             {tableTitle(item) && <p className="seating-roster-movie">{tableTitle(item)}</p>}
             {item.kind === "main" && plan.couple_at_main && !plan.couple_in_roster && <p>María y Guido</p>}
-            {people.length ? people.map((guest) => <p key={guest.id} draggable={fullEdit} onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} title={fullEdit ? "Arrastrá a otra mesa para cambiar su ubicación" : undefined} className={`seating-roster-guest${selectedGuestId === guest.id ? " highlighted" : ""}${draggedGuestId === guest.id ? " dragging" : ""}`}>{guest.name}{fullEdit && guest.dietary ? <em> · {guest.dietary}</em> : null}</p>) : <p className="seating-empty">Sin invitados asignados</p>}
+            {people.length ? people.map((guest) => <p key={guest.id} className={`seating-roster-guest${fullEdit ? " seating-roster-person" : ""}${selectedGuestIds.includes(guest.id) ? " highlighted" : ""}${draggedGuestIds.includes(guest.id) ? " dragging" : ""}`}>
+              {fullEdit ? <><input type="checkbox" aria-label={`Seleccionar a ${guest.name}`} checked={selectedGuestIds.includes(guest.id)} onChange={() => toggleGuest(guest.id)} /><button type="button" className="seating-roster-drag" draggable onDragStart={event => startGuestDrag(event, guest.id)} onDragEnd={endGuestDrag} onClick={() => toggleGuest(guest.id)} aria-pressed={selectedGuestIds.includes(guest.id)} title="Marcá varias personas o arrastrá este nombre a otra mesa">{guest.name}{guest.dietary ? <em> · {guest.dietary}</em> : null}</button></> : guest.name}
+            </p>) : <p className="seating-empty">Sin invitados asignados</p>}
           </article>;
         })}
       </div>
       </>}
       {pendingDelete && fullEdit && <DeleteRoomItemDialog item={pendingDelete} assigned={Object.values(plan.assignments).filter(id => id === pendingDelete.id).length} onCancel={() => setPendingDelete(null)} onConfirm={() => { removeItem(pendingDelete.id); setPendingDelete(null); }} />}
+      {pendingGuestDelete && fullEdit && <DeleteGuestsDialog guests={pendingGuestDelete} onCancel={() => setPendingGuestDelete(null)} onConfirm={confirmGuestRemoval} />}
     </section>
   );
 }

@@ -40,7 +40,11 @@
 .seating-guest-list strong { font-size: 13px; }
 .seating-guest-list small { margin-top: 4px; color: #aaa6a1; font-size: 11px; }
 .seating-guest-list em { flex: 0 0 auto; max-width: 95px; color: #ed9a9d; font-size: 11px; font-style: normal; text-align: right; }
+.seating-guest-info { flex: 1; min-width: 0; }
+.seating-guest-check { flex: 0 0 14px; width: 14px; height: 14px; border: 1px solid #888; border-radius: 3px; color: #fff; font: 11px/12px Arial, sans-serif; text-align: center; }
+.selected .seating-guest-check { background: #f40009; border-color: #f40009; }
 .seating-guest-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.seating-guest-actions > span { width: 100%; font-size: 11px; color: #ccc; line-height: 1.5; }
 .seating-guest-actions button { border: 1px solid #666; background: transparent; color: #f4f1eb; padding: 8px; font-size: 11px; }
 .seating-manual { margin-top: 18px; }
 .seating-manual label, .seating-editor label { display: block; color: #c8c3be; font-size: 11px; font-weight: 700; letter-spacing: .05em; }
@@ -89,6 +93,7 @@
 .seating-delete-content h2 { font: 30px/1.15 Georgia, serif; margin: 10px 0 16px; }
 .seating-delete-content p { font-size: 14px; line-height: 1.6; color: #bbb; }
 .seating-delete-content .seating-delete-name { color: #f5f2eb; font-weight: 700; }
+.seating-delete-guest-names { max-height: 140px; overflow: auto; margin: 14px 0; padding: 0; list-style: none; color: #f5f2eb; font-size: 14px; font-weight: 700; line-height: 1.7; }
 .seating-delete-actions { display: flex; gap: 10px; margin-top: 25px; }
 .seating-delete-actions button { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; border: 1px solid #666; background: transparent; color: #f5f2eb; padding: 12px 8px; border-radius: 4px; font: 700 12px Arial, sans-serif; cursor: pointer; }
 .seating-delete-actions .seating-delete-confirm { background: #f40009; border-color: #f40009; }

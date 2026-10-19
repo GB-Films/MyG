@@ -77,9 +77,17 @@
 .seating-studio .seating-roster article { border-radius: 4px; padding: 22px; background: #191918; border-color: #383838; break-inside: avoid; }
 .seating-studio .seating-roster article.selected { border-color: #f40009; }
 .seating-studio .seating-roster article.guest-drop-target { border-color: #f40009; outline: 2px dashed #f40009; outline-offset: 3px; background: #291719; }
-.seating-roster-guest[draggable=true] { cursor: grab; }
-.seating-roster-guest[draggable=true]:hover { background: #f4000920; }
+.seating-roster-guest:has(.seating-roster-drag):hover { background: #f4000920; }
 .seating-roster-guest.dragging { opacity: .45; cursor: grabbing; }
+.seating-roster-person { display: flex; align-items: baseline; gap: 5px; cursor: grab; }
+.seating .seating-roster-drag { min-width: 0; flex: 1; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; cursor: grab; }
+.seating .seating-roster-person input[type=checkbox] { flex: 0 0 13px; width: 13px; height: 13px; margin: 0; accent-color: #f40009; cursor: pointer; }
+.seating-roster-selection { grid-column: 1 / -1; position: sticky; top: 10px; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; margin-bottom: 4px; border: 1px solid #383838; border-radius: 4px; background: #191918f5; box-shadow: 0 4px 16px #0004; font-size: 12px; }
+.seating-roster-selection > span { flex: 1 1 250px; color: #ccc; line-height: 1.5; }
+.seating-roster-selection strong { color: white; }
+.seating-roster-selection button { padding: 8px 10px; border: 1px solid #666; border-radius: 4px; background: transparent; color: white; font-size: 11px; }
+.seating button.seating-delete-guests { display: inline-flex; align-items: center; gap: 6px; border-color: #74272b; color: #ff8e93; }
+.seating button.seating-delete-guests:hover { border-color: #f40009; background: #f40009; color: white; }
 .seating-roster-top { display: flex; align-items: center; justify-content: space-between; }
 .seating-studio .seating-roster-number { font-size: 36px; color: #f5f2eb; }
 .seating-studio .seating-roster p { font-size: 13px; line-height: 1.6; margin: 7px 0; }
@@ -204,6 +212,7 @@
   .seating-studio .seating-roster .seating-roster-movie { min-height: 52px; margin: 10px 0; padding-bottom: 9px; font-size: 16px; line-height: 1.3; }
 }
 @media print {
+  .seating-roster-selection, .seating-roster-person input { display: none !important; }
   .seating-transform { display: none !important; }
   .seating-studio { display: block; }
   .tables-page { padding: 0; background: white; }

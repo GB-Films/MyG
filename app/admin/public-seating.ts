@@ -2,7 +2,7 @@ import type { Plan } from "./seating-planner";
 
 /** Only names and seating are shared. Never copy contact, dietary or source data. */
 export function publicSeatingPlan(plan: Plan) {
-  const guests = plan.guest_source === "official" ? plan.official_guests || [] : plan.manual_guests;
+  const guests = (plan.guest_source === "official" ? plan.official_guests || [] : plan.manual_guests).filter(guest => !plan.excluded_guest_ids?.includes(guest.id));
   const assignments: Record<string, string> = {};
   const official_guests = guests.map((guest, index) => {
     const id = `person-${index + 1}`;
