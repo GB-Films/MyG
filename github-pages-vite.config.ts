@@ -16,6 +16,7 @@ export default defineConfig({
         admin: resolve(__dirname, "github-pages/admin/index.html"),
         mesas: resolve(__dirname, "github-pages/mesas/index.html"),
         quiz: resolve(__dirname, "github-pages/quiz/index.html"),
+        quizReward: resolve(__dirname, "github-pages/quiz/premio/index.html"),
       },
     },
   },
